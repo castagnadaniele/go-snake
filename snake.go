@@ -21,7 +21,17 @@ func (s *Snake) Start() {
 	s.Coordinates[2] = Coordinate{startX + 2, startY}
 }
 
-func (s *Snake) Move() {
+func (s *Snake) Move(d Direction) {
 	head := s.Coordinates[0]
-	s.Coordinates = append([]Coordinate{{head.X - 1, head.Y}}, s.Coordinates[:len(s.Coordinates)-1]...)
+	switch d {
+	case Up:
+		head.Y--
+	case Down:
+		head.Y++
+	case Left:
+		head.X--
+	case Right:
+		head.X++
+	}
+	s.Coordinates = append([]Coordinate{{head.X, head.Y}}, s.Coordinates[:len(s.Coordinates)-1]...)
 }

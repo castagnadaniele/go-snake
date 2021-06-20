@@ -20,7 +20,8 @@ func TestSnake(t *testing.T) {
 	}
 
 	for _, c := range coordinateTests {
-		t.Run(fmt.Sprintf("should start at %v with screen width and size %d, %d", c.snakeCoordinates[0], c.width, c.height), func(t *testing.T) {
+		name := fmt.Sprintf("should start at %v with screen width and size %d, %d", c.snakeCoordinates[0], c.width, c.height)
+		t.Run(name, func(t *testing.T) {
 			s := snake.NewSnake(c.width, c.height)
 			s.Start()
 
@@ -43,20 +44,54 @@ func TestSnake(t *testing.T) {
 		}
 	})
 
-	t.Run("should move one cell to left", func(t *testing.T) {
-		s := snake.NewSnake(60, 60)
-		s.Start()
-		s.Move()
-
-		got := s.Coordinates
-		want := []snake.Coordinate{
-			{35, 30},
+	moveTests := []struct {
+		moves    []snake.Direction
+		expected []snake.Coordinate
+	}{
+		{[]snake.Direction{
+			snake.Up,
+			snake.Right,
+		}, []snake.Coordinate{
+			{37, 29},
+			{36, 29},
 			{36, 30},
-			{37, 30},
-		}
+		}},
+		{[]snake.Direction{
+			snake.Down,
+			snake.Left,
+		}, []snake.Coordinate{
+			{35, 31},
+			{36, 31},
+			{36, 30},
+		}},
+		{[]snake.Direction{
+			snake.Up,
+			snake.Right,
+			snake.Right,
+			snake.Right,
+			snake.Right,
+			snake.Right,
+		}, []snake.Coordinate{
+			{41, 29},
+			{40, 29},
+			{39, 29},
+		}},
+	}
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, want %v", got, want)
-		}
-	})
+	for _, m := range moveTests {
+		t.Run(fmt.Sprintf("should move %v", m.moves), func(t *testing.T) {
+			s := snake.NewSnake(60, 60)
+			s.Start()
+
+			for _, move := range m.moves {
+				s.Move(move)
+			}
+
+			got := s.Coordinates
+			want := m.expected
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("got %v, want %v", got, want)
+			}
+		})
+	}
 }
