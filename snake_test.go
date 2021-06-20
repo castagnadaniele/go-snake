@@ -22,9 +22,9 @@ func TestSnake(t *testing.T) {
 	for _, c := range coordinateTests {
 		t.Run(fmt.Sprintf("should start at %v with screen width and size %d, %d", c.snakeCoordinates[0], c.width, c.height), func(t *testing.T) {
 			s := snake.NewSnake(c.width, c.height)
-			coordinates := s.Start()
+			s.Start()
 
-			got := coordinates
+			got := s.Coordinates
 			want := c.snakeCoordinates
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("got %v coordinates, want %v coordinates", got, want)
@@ -34,12 +34,29 @@ func TestSnake(t *testing.T) {
 
 	t.Run("should have 3 unit length", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
-		coordinates := s.Start()
+		s.Start()
 
-		got := len(coordinates)
+		got := len(s.Coordinates)
 		want := 3
 		if got != want {
 			t.Errorf("got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("should move one cell to left", func(t *testing.T) {
+		s := snake.NewSnake(60, 60)
+		s.Start()
+		s.Move()
+
+		got := s.Coordinates
+		want := []snake.Coordinate{
+			{35, 30},
+			{36, 30},
+			{37, 30},
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, want %v", got, want)
 		}
 	})
 }
