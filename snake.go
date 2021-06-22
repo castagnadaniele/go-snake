@@ -18,6 +18,7 @@ type Snake struct {
 	width       int
 	height      int
 	Coordinates []Coordinate
+	lastTail    Coordinate
 }
 
 func NewSnake(width, height int) *Snake {
@@ -30,11 +31,14 @@ func (s *Snake) Start() {
 	startY := int(math.Round(float64(s.height) * 0.5))
 	s.Coordinates[0] = Coordinate{startX, startY}
 	s.Coordinates[1] = Coordinate{startX + 1, startY}
-	s.Coordinates[2] = Coordinate{startX + 2, startY}
+	tail := Coordinate{startX + 2, startY}
+	s.Coordinates[2] = tail
+	s.lastTail = tail
 }
 
 func (s *Snake) Move(d Direction) error {
 	head := s.Coordinates[0]
+	s.lastTail = s.Coordinates[len(s.Coordinates)-1]
 	switch d {
 	case Up:
 		head.Y--
@@ -50,4 +54,8 @@ func (s *Snake) Move(d Direction) error {
 	}
 	s.Coordinates = append([]Coordinate{{head.X, head.Y}}, s.Coordinates[:len(s.Coordinates)-1]...)
 	return nil
+}
+
+func (s *Snake) Grow() {
+	s.Coordinates = append(s.Coordinates, s.lastTail)
 }

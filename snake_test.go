@@ -2,7 +2,6 @@ package snake_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/castagnadaniele/go-snake"
@@ -27,9 +26,7 @@ func TestSnake(t *testing.T) {
 
 			got := s.Coordinates
 			want := c.snakeCoordinates
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf("got %v coordinates, want %v coordinates", got, want)
-			}
+			snake.AssertCoordinates(t, got, want)
 		})
 	}
 
@@ -111,9 +108,21 @@ func TestSnake(t *testing.T) {
 
 			got := s.Coordinates
 			want := m.expected
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf("got %v, want %v", got, want)
-			}
+			snake.AssertCoordinates(t, got, want)
 		})
 	}
+
+	t.Run("should grow one cell on the tail", func(t *testing.T) {
+		s := snake.NewSnake(60, 60)
+		s.Start()
+		err := s.Move(snake.Left)
+		if err != nil {
+			t.Fatalf("got an error but didn't want one, %v", err)
+		}
+		s.Grow()
+
+		got := s.Coordinates
+		want := []snake.Coordinate{{35, 30}, {36, 30}, {37, 30}, {38, 30}}
+		snake.AssertCoordinates(t, got, want)
+	})
 }
