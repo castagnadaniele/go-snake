@@ -45,46 +45,68 @@ func TestSnake(t *testing.T) {
 	})
 
 	moveTests := []struct {
+		width    int
+		height   int
 		moves    []snake.Direction
 		expected []snake.Coordinate
+		err      error
 	}{
-		{[]snake.Direction{
+		{60, 60, []snake.Direction{
 			snake.Up,
 			snake.Right,
 		}, []snake.Coordinate{
 			{37, 29},
 			{36, 29},
 			{36, 30},
-		}},
-		{[]snake.Direction{
+		}, nil},
+		{60, 60, []snake.Direction{
 			snake.Down,
 			snake.Left,
 		}, []snake.Coordinate{
 			{35, 31},
 			{36, 31},
 			{36, 30},
-		}},
-		{[]snake.Direction{
+		}, nil},
+		{20, 20, []snake.Direction{
 			snake.Up,
 			snake.Right,
 			snake.Right,
 			snake.Right,
 			snake.Right,
 			snake.Right,
+			snake.Right,
+			snake.Right,
+			snake.Right,
 		}, []snake.Coordinate{
-			{41, 29},
-			{40, 29},
-			{39, 29},
-		}},
+			{19, 9},
+			{18, 9},
+			{17, 9},
+		}, snake.ErrHeadOutOfBoard},
+		{10, 10, []snake.Direction{
+			snake.Left,
+			snake.Left,
+			snake.Left,
+			snake.Left,
+			snake.Left,
+			snake.Left,
+			snake.Left,
+		}, []snake.Coordinate{
+			{0, 5},
+			{1, 5},
+			{2, 5},
+		}, snake.ErrHeadOutOfBoard},
 	}
 
 	for _, m := range moveTests {
 		t.Run(fmt.Sprintf("should move %v", m.moves), func(t *testing.T) {
-			s := snake.NewSnake(60, 60)
+			s := snake.NewSnake(m.width, m.height)
 			s.Start()
 
 			for _, move := range m.moves {
-				s.Move(move)
+				err := s.Move(move)
+				if err != nil && err != m.err {
+					t.Errorf("got error %v, want error %v", err, m.err)
+				}
 			}
 
 			got := s.Coordinates

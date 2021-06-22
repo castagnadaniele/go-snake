@@ -1,6 +1,18 @@
 package snake
 
-import "math"
+import (
+	"math"
+)
+
+const (
+	ErrHeadOutOfBoard = SnakeErr("snake: head out of board")
+)
+
+type SnakeErr string
+
+func (e SnakeErr) Error() string {
+	return string(e)
+}
 
 type Snake struct {
 	width       int
@@ -21,7 +33,7 @@ func (s *Snake) Start() {
 	s.Coordinates[2] = Coordinate{startX + 2, startY}
 }
 
-func (s *Snake) Move(d Direction) {
+func (s *Snake) Move(d Direction) error {
 	head := s.Coordinates[0]
 	switch d {
 	case Up:
@@ -33,5 +45,9 @@ func (s *Snake) Move(d Direction) {
 	case Right:
 		head.X++
 	}
+	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
+		return ErrHeadOutOfBoard
+	}
 	s.Coordinates = append([]Coordinate{{head.X, head.Y}}, s.Coordinates[:len(s.Coordinates)-1]...)
+	return nil
 }
