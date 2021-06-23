@@ -22,7 +22,6 @@ func TestSnake(t *testing.T) {
 		name := fmt.Sprintf("should start at %v with screen width and size %d, %d", c.snakeCoordinates[0], c.width, c.height)
 		t.Run(name, func(t *testing.T) {
 			s := snake.NewSnake(c.width, c.height)
-			s.Start()
 
 			got := s.Coordinates
 			want := c.snakeCoordinates
@@ -32,7 +31,6 @@ func TestSnake(t *testing.T) {
 
 	t.Run("should have 3 unit length", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
-		s.Start()
 
 		got := len(s.Coordinates)
 		want := 3
@@ -97,7 +95,6 @@ func TestSnake(t *testing.T) {
 	for _, m := range moveTests {
 		t.Run(fmt.Sprintf("should move %v", m.moves), func(t *testing.T) {
 			s := snake.NewSnake(m.width, m.height)
-			s.Start()
 
 			for _, move := range m.moves {
 				err := s.Move(move)
@@ -114,7 +111,6 @@ func TestSnake(t *testing.T) {
 
 	t.Run("should grow one cell on the tail", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
-		s.Start()
 		err := s.Move(snake.Left)
 		snake.AssertNoError(t, err)
 		err = s.Grow()
@@ -127,7 +123,6 @@ func TestSnake(t *testing.T) {
 
 	t.Run("should not grow if it didn't move before", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
-		s.Start()
 		err := s.Grow()
 
 		snake.AssertError(t, err, snake.ErrSnakeMustMoveBeforeGrowing)

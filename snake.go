@@ -22,19 +22,17 @@ type Snake struct {
 	lastTail    *Coordinate
 }
 
-// NewSnake returns a new Snake struct pointer setting width and height of the board.
+// NewSnake returns a new Snake struct pointer initializing snake coordiantes
+// and setting width and height of the board.
 func NewSnake(width, height int) *Snake {
-	return &Snake{width: width, height: height}
-}
-
-// Start initializes the snake coordinates.
-func (s *Snake) Start() {
+	s := &Snake{width: width, height: height}
 	s.Coordinates = make([]Coordinate, 3)
 	startX := int(math.Round(float64(s.width) * 0.6))
 	startY := int(math.Round(float64(s.height) * 0.5))
 	s.Coordinates[0] = Coordinate{startX, startY}
 	s.Coordinates[1] = Coordinate{startX + 1, startY}
 	s.Coordinates[2] = Coordinate{startX + 2, startY}
+	return s
 }
 
 // Move moves the snake head towards direction d, cutting tail coordinate
