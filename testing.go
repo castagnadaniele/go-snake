@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// AssertCoordinates asserts that got and want coordinates are deep equal
 func AssertCoordinates(t testing.TB, got []Coordinate, want []Coordinate) {
 	t.Helper()
 
