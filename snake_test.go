@@ -23,7 +23,7 @@ func TestSnake(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := snake.NewSnake(c.width, c.height)
 
-			got := s.Coordinates
+			got := s.GetCoordinates()
 			want := c.snakeCoordinates
 			snake.AssertCoordinates(t, got, want)
 		})
@@ -32,7 +32,7 @@ func TestSnake(t *testing.T) {
 	t.Run("should have 3 unit length", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
 
-		got := len(s.Coordinates)
+		got := len(s.GetCoordinates())
 		want := 3
 		if got != want {
 			t.Errorf("got %d, want %d", got, want)
@@ -103,7 +103,7 @@ func TestSnake(t *testing.T) {
 				}
 			}
 
-			got := s.Coordinates
+			got := s.GetCoordinates()
 			want := m.expected
 			snake.AssertCoordinates(t, got, want)
 		})
@@ -116,7 +116,7 @@ func TestSnake(t *testing.T) {
 		err = s.Grow()
 		snake.AssertNoError(t, err)
 
-		got := s.Coordinates
+		got := s.GetCoordinates()
 		want := []snake.Coordinate{{35, 30}, {36, 30}, {37, 30}, {38, 30}}
 		snake.AssertCoordinates(t, got, want)
 	})
