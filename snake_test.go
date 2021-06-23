@@ -102,7 +102,7 @@ func TestSnake(t *testing.T) {
 			for _, move := range m.moves {
 				err := s.Move(move)
 				if err != nil && err != m.err {
-					t.Errorf("got error %v, want error %v", err, m.err)
+					snake.AssertError(t, err, m.err)
 				}
 			}
 
@@ -116,13 +116,20 @@ func TestSnake(t *testing.T) {
 		s := snake.NewSnake(60, 60)
 		s.Start()
 		err := s.Move(snake.Left)
-		if err != nil {
-			t.Fatalf("got an error but didn't want one, %v", err)
-		}
-		s.Grow()
+		snake.AssertNoError(t, err)
+		err = s.Grow()
+		snake.AssertNoError(t, err)
 
 		got := s.Coordinates
 		want := []snake.Coordinate{{35, 30}, {36, 30}, {37, 30}, {38, 30}}
 		snake.AssertCoordinates(t, got, want)
+	})
+
+	t.Run("should not grow if it didn't move before", func(t *testing.T) {
+		s := snake.NewSnake(60, 60)
+		s.Start()
+		err := s.Grow()
+
+		snake.AssertError(t, err, snake.ErrSnakeMustMoveBeforeGrowing)
 	})
 }

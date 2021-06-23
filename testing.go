@@ -13,3 +13,24 @@ func AssertCoordinates(t testing.TB, got []Coordinate, want []Coordinate) {
 		t.Errorf("got %v coordinates, want %v coordinates", got, want)
 	}
 }
+
+// AssertNoError asserts that got is nil
+func AssertNoError(t testing.TB, got error) {
+	t.Helper()
+	if got != nil {
+		t.Fatal("got an error but didn't want one")
+	}
+}
+
+// AssertError asserts that got is the error I want
+func AssertError(t testing.TB, got error, want error) {
+	t.Helper()
+
+	if got == nil {
+		t.Fatal("didn't get an error but wanted one")
+	}
+
+	if got != want {
+		t.Errorf("got error %q, want error %q", got, want)
+	}
+}

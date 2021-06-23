@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	ErrHeadOutOfBoard = SnakeErr("snake: head out of board")
+	ErrHeadOutOfBoard             = SnakeErr("snake head out of board")
+	ErrSnakeMustMoveBeforeGrowing = SnakeErr("snake must move before growing")
 )
 
 type SnakeErr string
@@ -18,7 +19,7 @@ type Snake struct {
 	width       int
 	height      int
 	Coordinates []Coordinate
-	lastTail    Coordinate
+	lastTail    *Coordinate
 }
 
 // NewSnake returns a new Snake struct pointer setting width and height of the board.
@@ -41,7 +42,7 @@ func (s *Snake) Start() {
 // when head would move out of the board.
 func (s *Snake) Move(d Direction) error {
 	head := s.Coordinates[0]
-	s.lastTail = s.Coordinates[len(s.Coordinates)-1]
+	s.lastTail = &s.Coordinates[len(s.Coordinates)-1]
 	switch d {
 	case Up:
 		head.Y--
@@ -60,7 +61,13 @@ func (s *Snake) Move(d Direction) error {
 	return nil
 }
 
-// Grow grows snake tail appending the last cutted tail
-func (s *Snake) Grow() {
-	s.Coordinates = append(s.Coordinates, s.lastTail)
+// Grow grows snake tail appending the last cutted tail.
+// If snake did not move before growing, it returns
+// ErrSnakeMustMoveBeforeGrowing error
+func (s *Snake) Grow() error {
+	if s.lastTail == nil {
+		return ErrSnakeMustMoveBeforeGrowing
+	}
+	s.Coordinates = append(s.Coordinates, *s.lastTail)
+	return nil
 }
