@@ -15,7 +15,25 @@ func (e SnakeErr) Error() string {
 	return string(e)
 }
 
-type Snake struct {
+type Snake interface {
+	// GetCoordinates returns the snake internal coordinates.
+	GetCoordinates() []Coordinate
+
+	// Move moves the snake head towards direction d, cutting tail coordinate
+	// and appending new coordinate on head. Returns ErrHeadOutOfBoard error
+	// when head would move out of the board.
+	Move(d Direction) error
+
+	// Grow grows snake tail appending the last cutted tail.
+	// If snake did not move before growing, it returns
+	// ErrSnakeMustMoveBeforeGrowing error
+	Grow() error
+
+	// Face returns where the snake head is facing
+	Face() Direction
+}
+
+type DefaultSnake struct {
 	width         int
 	height        int
 	coordinates   []Coordinate
@@ -25,8 +43,8 @@ type Snake struct {
 
 // NewSnake returns a new Snake struct pointer initializing snake coordinates
 // and setting width and height of the board.
-func NewSnake(width, height int) *Snake {
-	s := &Snake{width: width, height: height}
+func NewSnake(width, height int) Snake {
+	s := &DefaultSnake{width: width, height: height}
 	s.coordinates = make([]Coordinate, 3)
 	startX := int(math.Round(float64(s.width) * 0.6))
 	startY := int(math.Round(float64(s.height) * 0.5))
@@ -37,15 +55,11 @@ func NewSnake(width, height int) *Snake {
 	return s
 }
 
-// GetCoordinates returns the snake internal coordinates.
-func (s *Snake) GetCoordinates() []Coordinate {
+func (s *DefaultSnake) GetCoordinates() []Coordinate {
 	return s.coordinates
 }
 
-// Move moves the snake head towards direction d, cutting tail coordinate
-// and appending new coordinate on head. Returns ErrHeadOutOfBoard error
-// when head would move out of the board.
-func (s *Snake) Move(d Direction) error {
+func (s *DefaultSnake) Move(d Direction) error {
 	head := s.coordinates[0]
 	s.lastTail = &s.coordinates[len(s.coordinates)-1]
 	switch d {
@@ -67,10 +81,7 @@ func (s *Snake) Move(d Direction) error {
 	return nil
 }
 
-// Grow grows snake tail appending the last cutted tail.
-// If snake did not move before growing, it returns
-// ErrSnakeMustMoveBeforeGrowing error
-func (s *Snake) Grow() error {
+func (s *DefaultSnake) Grow() error {
 	if s.lastTail == nil {
 		return ErrSnakeMustMoveBeforeGrowing
 	}
@@ -78,7 +89,6 @@ func (s *Snake) Grow() error {
 	return nil
 }
 
-// Face returns where the snake head is facing
-func (s *Snake) Face() Direction {
+func (s *DefaultSnake) Face() Direction {
 	return s.faceDirection
 }
