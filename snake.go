@@ -60,8 +60,19 @@ func (s *DefaultSnake) GetCoordinates() []Coordinate {
 }
 
 func (s *DefaultSnake) Move(d Direction) error {
-	head := s.coordinates[0]
+	head := s.setHead(d)
+	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
+		return ErrHeadOutOfBoard
+	}
 	s.lastTail = &s.coordinates[len(s.coordinates)-1]
+	s.faceDirection = d
+	s.coordinates = append([]Coordinate{{head.X, head.Y}},
+		s.coordinates[:len(s.coordinates)-1]...)
+	return nil
+}
+
+func (s *DefaultSnake) setHead(d Direction) Coordinate {
+	head := s.coordinates[0]
 	switch d {
 	case Up:
 		head.Y--
@@ -72,13 +83,7 @@ func (s *DefaultSnake) Move(d Direction) error {
 	case Right:
 		head.X++
 	}
-	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
-		return ErrHeadOutOfBoard
-	}
-	s.faceDirection = d
-	s.coordinates = append([]Coordinate{{head.X, head.Y}},
-		s.coordinates[:len(s.coordinates)-1]...)
-	return nil
+	return head
 }
 
 func (s *DefaultSnake) Grow() error {
