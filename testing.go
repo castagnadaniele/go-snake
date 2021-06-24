@@ -34,3 +34,10 @@ func AssertError(t testing.TB, got error, want error) {
 		t.Errorf("got error %q, want error %q", got, want)
 	}
 }
+
+func AssertDirection(t testing.TB, got Direction, want Direction) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %q direction, want %q direction", got, want)
+	}
+}

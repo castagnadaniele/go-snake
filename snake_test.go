@@ -127,4 +127,54 @@ func TestSnake(t *testing.T) {
 
 		snake.AssertError(t, err, snake.ErrSnakeMustMoveBeforeGrowing)
 	})
+
+	directionCases := []struct {
+		directions []snake.Direction
+		expected   snake.Direction
+	}{
+		{[]snake.Direction{
+			snake.Left,
+		}, snake.Left},
+		{[]snake.Direction{
+			snake.Right,
+		}, snake.Right},
+		{[]snake.Direction{
+			snake.Down,
+		}, snake.Down},
+		{[]snake.Direction{
+			snake.Up,
+		}, snake.Up},
+		{[]snake.Direction{
+			snake.Up,
+			snake.Down,
+			snake.Right,
+		}, snake.Right},
+		{[]snake.Direction{
+			snake.Right,
+			snake.Left,
+		}, snake.Left},
+	}
+
+	for _, c := range directionCases {
+		t.Run(fmt.Sprintf("should face %v after moving %v", c.expected, c.directions), func(t *testing.T) {
+			s := snake.NewSnake(60, 60)
+
+			for _, d := range c.directions {
+				err := s.Move(d)
+				snake.AssertNoError(t, err)
+			}
+
+			got := s.Face()
+			want := c.expected
+			snake.AssertDirection(t, got, want)
+		})
+	}
+
+	t.Run("should face Left at start", func(t *testing.T) {
+		s := snake.NewSnake(60, 60)
+
+		got := s.Face()
+		want := snake.Left
+		snake.AssertDirection(t, got, want)
+	})
 }

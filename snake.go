@@ -16,10 +16,11 @@ func (e SnakeErr) Error() string {
 }
 
 type Snake struct {
-	width       int
-	height      int
-	coordinates []Coordinate
-	lastTail    *Coordinate
+	width         int
+	height        int
+	coordinates   []Coordinate
+	lastTail      *Coordinate
+	faceDirection Direction
 }
 
 // NewSnake returns a new Snake struct pointer initializing snake coordinates
@@ -32,6 +33,7 @@ func NewSnake(width, height int) *Snake {
 	s.coordinates[0] = Coordinate{startX, startY}
 	s.coordinates[1] = Coordinate{startX + 1, startY}
 	s.coordinates[2] = Coordinate{startX + 2, startY}
+	s.faceDirection = Left
 	return s
 }
 
@@ -59,6 +61,7 @@ func (s *Snake) Move(d Direction) error {
 	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
 		return ErrHeadOutOfBoard
 	}
+	s.faceDirection = d
 	s.coordinates = append([]Coordinate{{head.X, head.Y}},
 		s.coordinates[:len(s.coordinates)-1]...)
 	return nil
@@ -73,4 +76,9 @@ func (s *Snake) Grow() error {
 	}
 	s.coordinates = append(s.coordinates, *s.lastTail)
 	return nil
+}
+
+// Face returns where the snake head is facing
+func (s *Snake) Face() Direction {
+	return s.faceDirection
 }
