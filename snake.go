@@ -1,6 +1,7 @@
 package snake
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -9,10 +10,28 @@ const (
 	ErrSnakeMustMoveBeforeGrowing = SnakeErr("snake must move before growing")
 )
 
+const (
+	upDown    = Up | Down
+	leftRight = Left | Right
+)
+
 type SnakeErr string
 
 func (e SnakeErr) Error() string {
 	return string(e)
+}
+
+type SnakeInvalidMoveErr struct {
+	Face Direction
+	Move Direction
+}
+
+func NewSnakeInvalidMoveErr(face, move Direction) error {
+	return SnakeInvalidMoveErr{face, move}
+}
+
+func (e SnakeInvalidMoveErr) Error() string {
+	return fmt.Sprintf("snake can not move %v if facing %v", e.Move, e.Face)
 }
 
 type Snake interface {
@@ -64,6 +83,9 @@ func (s *DefaultSnake) Move(d Direction) error {
 	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
 		return ErrHeadOutOfBoard
 	}
+	if s.isInvalidMove(d) {
+		return NewSnakeInvalidMoveErr(s.faceDirection, d)
+	}
 	s.lastTail = &s.coordinates[len(s.coordinates)-1]
 	s.faceDirection = d
 	s.coordinates = append([]Coordinate{{head.X, head.Y}},
@@ -84,6 +106,15 @@ func (s *DefaultSnake) setHead(d Direction) Coordinate {
 		head.X++
 	}
 	return head
+}
+
+func (s *DefaultSnake) isInvalidMove(d Direction) bool {
+	if d != s.faceDirection &&
+		((Has(d, upDown) && Has(s.faceDirection, upDown)) ||
+			(Has(d, leftRight) && Has(s.faceDirection, leftRight))) {
+		return true
+	}
+	return false
 }
 
 func (s *DefaultSnake) Grow() error {

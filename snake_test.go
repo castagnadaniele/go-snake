@@ -85,11 +85,27 @@ func TestSnake(t *testing.T) {
 			snake.Left,
 			snake.Left,
 			snake.Left,
+			snake.Left,
 		}, []snake.Coordinate{
 			{0, 5},
 			{1, 5},
 			{2, 5},
 		}, snake.ErrHeadOutOfBoard},
+		{10, 10, []snake.Direction{
+			snake.Right,
+		}, []snake.Coordinate{
+			{6, 5},
+			{7, 5},
+			{8, 5},
+		}, snake.NewSnakeInvalidMoveErr(snake.Left, snake.Right)},
+		{10, 10, []snake.Direction{
+			snake.Down,
+			snake.Up,
+		}, []snake.Coordinate{
+			{6, 6},
+			{6, 5},
+			{7, 5},
+		}, snake.NewSnakeInvalidMoveErr(snake.Down, snake.Up)},
 	}
 
 	for _, m := range moveTests {
@@ -136,6 +152,7 @@ func TestSnake(t *testing.T) {
 			snake.Left,
 		}, snake.Left},
 		{[]snake.Direction{
+			snake.Up,
 			snake.Right,
 		}, snake.Right},
 		{[]snake.Direction{
@@ -146,13 +163,14 @@ func TestSnake(t *testing.T) {
 		}, snake.Up},
 		{[]snake.Direction{
 			snake.Up,
+			snake.Right,
 			snake.Down,
-			snake.Right,
-		}, snake.Right},
+		}, snake.Down},
 		{[]snake.Direction{
+			snake.Up,
 			snake.Right,
-			snake.Left,
-		}, snake.Left},
+			snake.Down,
+		}, snake.Down},
 	}
 
 	for _, c := range directionCases {

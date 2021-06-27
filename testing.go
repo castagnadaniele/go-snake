@@ -35,6 +35,7 @@ func AssertError(t testing.TB, got error, want error) {
 	}
 }
 
+// AssertDirection asserts that the direction I got is the direction I want
 func AssertDirection(t testing.TB, got Direction, want Direction) {
 	t.Helper()
 	if got != want {
