@@ -37,7 +37,9 @@ func (g *Game) eventRoutine() {
 			g.snake.Move(direction)
 			g.coordinatesC <- g.snake.GetCoordinates()
 		case d := <-g.movesC:
-			direction = d
+			if g.snake.IsValidMove(d) {
+				direction = d
+			}
 		}
 	}
 }

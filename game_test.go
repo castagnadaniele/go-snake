@@ -55,6 +55,24 @@ func TestGame(t *testing.T) {
 		}
 		snake.AssertCoordinates(t, got, want)
 	})
+
+	t.Run("snake should keep moving on face direction when an invalid move is sent", func(t *testing.T) {
+		s := snake.NewSnake(width, height)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+		g := snake.NewGame(s, cloak)
+		g.Start(time.Microsecond)
+
+		g.SendMove(snake.Right)
+		cloak.AddTick()
+		got := <-g.Coordinates()
+		want := []snake.Coordinate{
+			{35, 30},
+			{36, 30},
+			{37, 30},
+		}
+		snake.AssertCoordinates(t, got, want)
+	})
 }
 
 type StubCloak struct {
