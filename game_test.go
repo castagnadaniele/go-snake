@@ -18,9 +18,9 @@ func TestGame(t *testing.T) {
 		g.Start(time.Microsecond)
 
 		cloak.AddTick()
-		<-g.Coordinates()
+		g.ReceiveResult()
 		cloak.AddTick()
-		got := <-g.Coordinates()
+		got, _ := g.ReceiveResult()
 		want := []snake.Coordinate{
 			{34, 30},
 			{35, 30},
@@ -37,7 +37,7 @@ func TestGame(t *testing.T) {
 		g.Start(time.Microsecond)
 
 		cloak.AddTick()
-		got := <-g.Coordinates()
+		got, _ := g.ReceiveResult()
 		want := []snake.Coordinate{
 			{35, 30},
 			{36, 30},
@@ -47,7 +47,7 @@ func TestGame(t *testing.T) {
 
 		g.SendMove(snake.Up)
 		cloak.AddTick()
-		got = <-g.Coordinates()
+		got, _ = g.ReceiveResult()
 		want = []snake.Coordinate{
 			{35, 29},
 			{35, 30},
@@ -65,13 +65,37 @@ func TestGame(t *testing.T) {
 
 		g.SendMove(snake.Right)
 		cloak.AddTick()
-		got := <-g.Coordinates()
+		got, _ := g.ReceiveResult()
 		want := []snake.Coordinate{
 			{35, 30},
 			{36, 30},
 			{37, 30},
 		}
 		snake.AssertCoordinates(t, got, want)
+	})
+
+	t.Run("game should end when snake moves out of board", func(t *testing.T) {
+		s := snake.NewSnake(10, 10)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+		g := snake.NewGame(s, cloak)
+		g.Start(time.Microsecond)
+
+		for i := 0; i < 6; i++ {
+			cloak.AddTick()
+			g.ReceiveResult()
+		}
+
+		cloak.AddTick()
+		_, result := g.ReceiveResult()
+
+		if result == nil {
+			t.Fatal("should have got a boolean pointer, got nil")
+		}
+
+		if *result {
+			t.Errorf("got game result %t, want %t", *result, false)
+		}
 	})
 }
 

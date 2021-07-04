@@ -8,6 +8,7 @@ type Game struct {
 	cloak        Cloak
 	coordinatesC chan []Coordinate
 	movesC       chan Direction
+	resultC      chan bool
 }
 
 // NewGame returns a pointer to Game, which handles snake
@@ -15,7 +16,8 @@ type Game struct {
 func NewGame(snake Snake, cloak Cloak) *Game {
 	coordinatesChannel := make(chan []Coordinate)
 	movesChannel := make(chan Direction)
-	return &Game{snake, cloak, coordinatesChannel, movesChannel}
+	resultChannel := make(chan bool)
+	return &Game{snake, cloak, coordinatesChannel, movesChannel, resultChannel}
 }
 
 // Start starts cloak to tick every d time.Duration,
@@ -34,7 +36,11 @@ func (g *Game) eventRoutine() {
 	for {
 		select {
 		case <-g.cloak.Tick():
-			g.snake.Move(direction)
+			err := g.snake.Move(direction)
+			if err == ErrHeadOutOfBoard {
+				g.resultC <- false
+				return
+			}
 			g.coordinatesC <- g.snake.GetCoordinates()
 		case d := <-g.movesC:
 			if g.snake.IsValidMove(d) {
@@ -44,14 +50,19 @@ func (g *Game) eventRoutine() {
 	}
 }
 
-// Coordinates returns a []Coordinate receiver channel
-// which exposes snake moves after every new tick
-func (g *Game) Coordinates() <-chan []Coordinate {
-	return g.coordinatesC
-}
-
 // SendMove sends d Direction to the internal Direction channel
 // which will be pooled inside the Start go routine to change snake direction
 func (g *Game) SendMove(d Direction) {
 	g.movesC <- d
+}
+
+// ReceiveResult returns a ([]Coordinate, *bool) tuple with snake moves
+// or game result. It waits to receive values from the game internal channels.
+func (g *Game) ReceiveResult() (coordinate []Coordinate, result *bool) {
+	select {
+	case c := <-g.coordinatesC:
+		return c, nil
+	case r := <-g.resultC:
+		return nil, &r
+	}
 }

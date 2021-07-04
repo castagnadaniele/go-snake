@@ -20,8 +20,8 @@ func TestGameTicker(t *testing.T) {
 			cloak.Stop()
 		}()
 
-		<-g.Coordinates()
-		got := <-g.Coordinates()
+		g.ReceiveResult()
+		got, _ := g.ReceiveResult()
 		want := []snake.Coordinate{
 			{X: 34, Y: 30},
 			{X: 35, Y: 30},
