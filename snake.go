@@ -34,6 +34,7 @@ func (e SnakeInvalidMoveErr) Error() string {
 	return fmt.Sprintf("snake can not move %v if facing %v", e.Move, e.Face)
 }
 
+// Snake is the snake interface
 type Snake interface {
 	// GetCoordinates returns the snake internal coordinates.
 	GetCoordinates() []Coordinate
@@ -45,13 +46,17 @@ type Snake interface {
 
 	// Grow grows snake tail appending the last cutted tail.
 	// If snake did not move before growing, it returns
-	// ErrSnakeMustMoveBeforeGrowing error
+	// ErrSnakeMustMoveBeforeGrowing error.
 	Grow() error
 
-	// Face returns where the snake head is facing
+	// Face returns where the snake head is facing.
 	Face() Direction
+
+	// IsValidMove tests if direction is valid for next snake move.
+	IsValidMove(d Direction) bool
 }
 
+// Default snake implementation
 type DefaultSnake struct {
 	width         int
 	height        int
@@ -83,7 +88,7 @@ func (s *DefaultSnake) Move(d Direction) error {
 	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
 		return ErrHeadOutOfBoard
 	}
-	if s.isInvalidMove(d) {
+	if !s.IsValidMove(d) {
 		return NewSnakeInvalidMoveErr(s.faceDirection, d)
 	}
 	s.lastTail = &s.coordinates[len(s.coordinates)-1]
@@ -108,13 +113,13 @@ func (s *DefaultSnake) setHead(d Direction) Coordinate {
 	return head
 }
 
-func (s *DefaultSnake) isInvalidMove(d Direction) bool {
+func (s *DefaultSnake) IsValidMove(d Direction) bool {
 	if d != s.faceDirection &&
 		((Has(d, upDown) && Has(s.faceDirection, upDown)) ||
 			(Has(d, leftRight) && Has(s.faceDirection, leftRight))) {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 func (s *DefaultSnake) Grow() error {
