@@ -17,7 +17,8 @@ func TestFood(t *testing.T) {
 			{2, 0},
 		}
 
-		c := food.Generate(snakeCoordinates)
+		c, err := food.Generate(snakeCoordinates)
+		snake.AssertNoError(t, err)
 		for _, sc := range snakeCoordinates {
 			if reflect.DeepEqual(c, sc) {
 				t.Errorf("snake coordinates %v should not contain food coordinate %v", snakeCoordinates, c)
@@ -40,11 +41,28 @@ func TestFood(t *testing.T) {
 			}
 		}
 
-		c := food.Generate(snakeCoordinates)
+		c, err := food.Generate(snakeCoordinates)
+		snake.AssertNoError(t, err)
 		for _, sc := range snakeCoordinates {
 			if reflect.DeepEqual(c, sc) {
 				t.Errorf("snake coordinates %v should not contain food coordinate %v", snakeCoordinates, c)
 			}
 		}
+	})
+
+	t.Run("should return error when snake coordinates fill the board", func(t *testing.T) {
+		width, height := 10, 10
+		food := snake.NewFood(width, height)
+		snakeCoordinates := make([]snake.Coordinate, (width * height))
+		index := 0
+		for i := 0; i < 10; i++ {
+			for j := 0; j < 10; j++ {
+				snakeCoordinates[index] = snake.Coordinate{i, j}
+				index++
+			}
+		}
+
+		_, err := food.Generate(snakeCoordinates)
+		snake.AssertError(t, err, snake.ErrBoardFull)
 	})
 }
