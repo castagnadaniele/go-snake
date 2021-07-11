@@ -4,7 +4,7 @@ import "time"
 
 // Game coordinates the snake behaviour with the cloak ticks.
 type Game struct {
-	snake        Snake
+	snake        *Snake
 	cloak        Cloak
 	coordinatesC chan []Coordinate
 	movesC       chan Direction
@@ -13,7 +13,7 @@ type Game struct {
 
 // NewGame returns a pointer to Game, which handles snake
 // methods on cloak ticks
-func NewGame(snake Snake, cloak Cloak) *Game {
+func NewGame(snake *Snake, cloak Cloak) *Game {
 	coordinatesChannel := make(chan []Coordinate)
 	movesChannel := make(chan Direction)
 	resultChannel := make(chan bool)
