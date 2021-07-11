@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	ErrBoardFull = FoodError("board full: can not generate food coordinate")
+	ErrBoardFull = FoodError("snake: food: board full, can not generate food coordinate")
 )
 
-// Food struct, contains board width and height
+// Food struct which implements snake food coordinate random generation.
 type Food struct {
 	width  int
 	height int
@@ -36,6 +36,7 @@ func (f *Food) Generate(c []Coordinate) (Coordinate, error) {
 	return foodCoordinate, nil
 }
 
+// FoodError type defines food errors
 type FoodError string
 
 func (e FoodError) Error() string {

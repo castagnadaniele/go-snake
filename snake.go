@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	ErrHeadOutOfBoard             = SnakeErr("snake head out of board")
-	ErrSnakeMustMoveBeforeGrowing = SnakeErr("snake must move before growing")
+	ErrHeadOutOfBoard             = SnakeErr("snake: head out of board")
+	ErrSnakeMustMoveBeforeGrowing = SnakeErr("snake: must move before growing")
 )
 
 const (
@@ -15,12 +15,14 @@ const (
 	leftRight = Left | Right
 )
 
+// SnakeErr type defines snake errors
 type SnakeErr string
 
 func (e SnakeErr) Error() string {
 	return string(e)
 }
 
+// SnakeInvalidMoveErr implements invalid move direction error
 type SnakeInvalidMoveErr struct {
 	Face Direction
 	Move Direction
@@ -31,7 +33,7 @@ func NewSnakeInvalidMoveErr(face, move Direction) error {
 }
 
 func (e SnakeInvalidMoveErr) Error() string {
-	return fmt.Sprintf("snake can not move %v if facing %v", e.Move, e.Face)
+	return fmt.Sprintf("snake: can not move %v if facing %v", e.Move, e.Face)
 }
 
 // Snake is the struct which implements the snake behaviour.

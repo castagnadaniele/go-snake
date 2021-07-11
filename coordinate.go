@@ -1,5 +1,6 @@
 package snake
 
+// Coordinate implements board coordinates.
 type Coordinate struct {
 	X int
 	Y int
