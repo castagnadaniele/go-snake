@@ -11,7 +11,9 @@ func TestGameTicker(t *testing.T) {
 	t.Run("should run game", func(t *testing.T) {
 		s := snake.NewSnake(60, 60)
 		cloak := snake.NewCloak()
-		g := snake.NewGame(s, cloak)
+		f := &snake.StubFood{}
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
 
 		g.Start(2 * time.Millisecond)
 

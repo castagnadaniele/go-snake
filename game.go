@@ -4,20 +4,26 @@ import "time"
 
 // Game coordinates the snake behaviour with the cloak ticks.
 type Game struct {
-	snake        *Snake
-	cloak        Cloak
-	coordinatesC chan []Coordinate
-	movesC       chan Direction
-	resultC      chan bool
+	snake          *Snake
+	cloak          Cloak
+	foodProducer   FoodGenerator
+	coordinatesC   chan []Coordinate
+	movesC         chan Direction
+	resultC        chan bool
+	foodCoordinate Coordinate
 }
 
 // NewGame returns a pointer to Game, which handles snake
 // methods on cloak ticks
-func NewGame(snake *Snake, cloak Cloak) *Game {
+func NewGame(snake *Snake, cloak Cloak, foodProducer FoodGenerator) (*Game, error) {
 	coordinatesChannel := make(chan []Coordinate)
 	movesChannel := make(chan Direction)
 	resultChannel := make(chan bool)
-	return &Game{snake, cloak, coordinatesChannel, movesChannel, resultChannel}
+	food, err := foodProducer.Generate(snake.GetCoordinates())
+	if err != nil {
+		return nil, err
+	}
+	return &Game{snake, cloak, foodProducer, coordinatesChannel, movesChannel, resultChannel, food}, nil
 }
 
 // Start starts cloak to tick every d time.Duration,
@@ -32,22 +38,40 @@ func (g *Game) Start(d time.Duration) {
 func (g *Game) eventRoutine() {
 	defer close(g.coordinatesC)
 	defer close(g.movesC)
+	defer close(g.resultC)
 	direction := g.snake.Face()
 	for {
 		select {
 		case <-g.cloak.Tick():
-			err := g.snake.Move(direction)
-			if err == ErrHeadOutOfBoard {
+			result := g.handleMove(direction)
+			if !result {
 				g.resultC <- false
 				return
 			}
-			g.coordinatesC <- g.snake.GetCoordinates()
 		case d := <-g.movesC:
 			if g.snake.IsValidMove(d) {
 				direction = d
 			}
 		}
 	}
+}
+
+func (g *Game) handleMove(d Direction) bool {
+	err := g.snake.Move(d)
+	if err == ErrHeadOutOfBoard {
+		return false
+	}
+	coord := g.snake.GetCoordinates()
+	head := coord[0]
+	if head.X == g.foodCoordinate.X && head.Y == g.foodCoordinate.Y {
+		err = g.snake.Grow()
+		coord = g.snake.GetCoordinates()
+		if err != nil {
+			return false
+		}
+	}
+	g.coordinatesC <- coord
+	return true
 }
 
 // SendMove sends d Direction to the internal Direction channel

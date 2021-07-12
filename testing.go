@@ -18,7 +18,7 @@ func AssertCoordinates(t testing.TB, got []Coordinate, want []Coordinate) {
 func AssertNoError(t testing.TB, got error) {
 	t.Helper()
 	if got != nil {
-		t.Fatal("got an error but didn't want one")
+		t.Fatalf("got an error but didn't want one: %v", got)
 	}
 }
 
@@ -41,4 +41,17 @@ func AssertDirection(t testing.TB, got Direction, want Direction) {
 	if got != want {
 		t.Errorf("got %q direction, want %q direction", got, want)
 	}
+}
+
+// StubFood stubs a food producer
+type StubFood struct {
+	next Coordinate
+}
+
+func (s *StubFood) Generate(c []Coordinate) (Coordinate, error) {
+	return s.next, nil
+}
+
+func (s *StubFood) Set(c Coordinate) {
+	s.next = c
 }

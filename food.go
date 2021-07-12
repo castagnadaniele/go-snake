@@ -9,6 +9,13 @@ const (
 	ErrBoardFull = FoodError("snake: food: board full, can not generate food coordinate")
 )
 
+// FoodGenerator interface describes a food producer.
+//
+// Generate
+type FoodGenerator interface {
+	Generate(c []Coordinate) (Coordinate, error)
+}
+
 // Food struct which implements snake food coordinate random generation.
 type Food struct {
 	width  int

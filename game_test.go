@@ -9,12 +9,14 @@ import (
 
 func TestGame(t *testing.T) {
 	width, height := 60, 60
+	f := &snake.StubFood{}
 
 	t.Run("should start game", func(t *testing.T) {
 		s := snake.NewSnake(width, height)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g := snake.NewGame(s, cloak)
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
 		g.Start(time.Microsecond)
 
 		cloak.AddTick()
@@ -33,7 +35,8 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(width, height)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g := snake.NewGame(s, cloak)
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
 		g.Start(time.Microsecond)
 
 		cloak.AddTick()
@@ -60,7 +63,8 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(width, height)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g := snake.NewGame(s, cloak)
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
 		g.Start(time.Microsecond)
 
 		g.SendMove(snake.Right)
@@ -78,7 +82,8 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(10, 10)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g := snake.NewGame(s, cloak)
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
 		g.Start(time.Microsecond)
 
 		for i := 0; i < 6; i++ {
@@ -95,6 +100,25 @@ func TestGame(t *testing.T) {
 
 		if *result {
 			t.Errorf("got game result %t, want %t", *result, false)
+		}
+	})
+
+	t.Run("snake should grow after eating food", func(t *testing.T) {
+		s := snake.NewSnake(10, 10)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+		f.Set(snake.Coordinate{5, 5})
+		g, err := snake.NewGame(s, cloak, f)
+		snake.AssertNoError(t, err)
+		g.Start(time.Microsecond)
+		cloak.AddTick()
+
+		c, r := g.ReceiveResult()
+		if r != nil {
+			t.Fatalf("got %v, want nil", r)
+		}
+		if len(c) != 4 {
+			t.Errorf("got snake len %d, want %d", len(c), 4)
 		}
 	})
 }
