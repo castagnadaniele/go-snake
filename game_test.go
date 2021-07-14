@@ -9,7 +9,7 @@ import (
 
 func TestGame(t *testing.T) {
 	width, height := 60, 60
-	f := &snake.StubFood{}
+	f := snake.NewFood(width, height)
 
 	t.Run("should start game", func(t *testing.T) {
 		s := snake.NewSnake(width, height)
@@ -107,20 +107,52 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(10, 10)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		f.Set(snake.Coordinate{5, 5})
-		g, err := snake.NewGame(s, cloak, f)
+		sf := &snake.StubFood{}
+		sf.Seed([]snake.Coordinate{{5, 5}, {4, 5}, {3, 5}})
+		g, err := snake.NewGame(s, cloak, sf)
 		snake.AssertNoError(t, err)
 		g.Start(time.Microsecond)
 		cloak.AddTick()
 
 		c, r := g.ReceiveResult()
-		if r != nil {
-			t.Fatalf("got %v, want nil", r)
-		}
-		if len(c) != 4 {
-			t.Errorf("got snake len %d, want %d", len(c), 4)
-		}
+		assertNoGameResult(t, r)
+		assertSnakeLength(t, c, 4)
 	})
+
+	t.Run("should generate food after snake eats", func(t *testing.T) {
+		s := snake.NewSnake(10, 10)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+		sf := &snake.StubFood{}
+		sf.Seed([]snake.Coordinate{{5, 5}, {4, 5}, {3, 5}, {2, 5}})
+		g, err := snake.NewGame(s, cloak, sf)
+		snake.AssertNoError(t, err)
+		g.Start(time.Microsecond)
+		cloak.AddTick()
+
+		c, r := g.ReceiveResult()
+		assertNoGameResult(t, r)
+		assertSnakeLength(t, c, 4)
+		cloak.AddTick()
+		c, r = g.ReceiveResult()
+		assertNoGameResult(t, r)
+		assertSnakeLength(t, c, 5)
+	})
+}
+
+func assertNoGameResult(t testing.TB, result *bool) {
+	t.Helper()
+	if result != nil {
+		t.Fatalf("got result %v, want nil", result)
+	}
+}
+
+func assertSnakeLength(t testing.TB, c []snake.Coordinate, want int) {
+	t.Helper()
+	got := len(c)
+	if got != want {
+		t.Errorf("got snake len %d, want %d", got, want)
+	}
 }
 
 type StubCloak struct {

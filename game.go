@@ -69,6 +69,10 @@ func (g *Game) handleMove(d Direction) bool {
 		if err != nil {
 			return false
 		}
+		g.foodCoordinate, err = g.foodProducer.Generate(coord)
+		if err != nil {
+			return false
+		}
 	}
 	g.coordinatesC <- coord
 	return true

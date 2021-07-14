@@ -43,15 +43,17 @@ func AssertDirection(t testing.TB, got Direction, want Direction) {
 	}
 }
 
-// StubFood stubs a food producer
+// StubFood stubs a food generator
 type StubFood struct {
-	next Coordinate
+	seedValues []Coordinate
 }
 
 func (s *StubFood) Generate(c []Coordinate) (Coordinate, error) {
-	return s.next, nil
+	result := s.seedValues[0]
+	s.seedValues = s.seedValues[1:]
+	return result, nil
 }
 
-func (s *StubFood) Set(c Coordinate) {
-	s.next = c
+func (s *StubFood) Seed(c []Coordinate) {
+	s.seedValues = c
 }
