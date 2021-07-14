@@ -50,8 +50,8 @@ type Snake struct {
 func NewSnake(width, height int) *Snake {
 	s := &Snake{width: width, height: height}
 	s.coordinates = make([]Coordinate, 3)
-	startX := int(math.Round(float64(s.width) * 0.6))
-	startY := int(math.Round(float64(s.height) * 0.5))
+	startX := int(math.Floor(float64(s.width) * 0.6))
+	startY := int(math.Floor(float64(s.height) * 0.5))
 	s.coordinates[0] = Coordinate{startX, startY}
 	s.coordinates[1] = Coordinate{startX + 1, startY}
 	s.coordinates[2] = Coordinate{startX + 2, startY}

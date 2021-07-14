@@ -15,7 +15,7 @@ func TestSnake(t *testing.T) {
 	}{
 		{60, 60, []snake.Coordinate{{36, 30}, {37, 30}, {38, 30}}},
 		{80, 80, []snake.Coordinate{{48, 40}, {49, 40}, {50, 40}}},
-		{49, 53, []snake.Coordinate{{29, 27}, {30, 27}, {31, 27}}},
+		{49, 53, []snake.Coordinate{{29, 26}, {30, 26}, {31, 26}}},
 	}
 
 	for _, c := range coordinateTests {
