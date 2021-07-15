@@ -43,17 +43,27 @@ func AssertDirection(t testing.TB, got Direction, want Direction) {
 	}
 }
 
-// StubFood stubs a food generator
-type StubFood struct {
-	seedValues []Coordinate
+// FoodStubValue stores the coordinate and the error
+// returned from FoodStub Generate.
+type FoodStubValue struct {
+	Coord Coordinate
+	Err   error
 }
 
-func (s *StubFood) Generate(c []Coordinate) (Coordinate, error) {
+// FoodStub stubs a food generator
+type FoodStub struct {
+	seedValues []FoodStubValue
+}
+
+// Generate returns the first food stub value from FoodStub internal
+// array, then pops it from the array.
+func (s *FoodStub) Generate(c []Coordinate) (Coordinate, error) {
 	result := s.seedValues[0]
 	s.seedValues = s.seedValues[1:]
-	return result, nil
+	return result.Coord, result.Err
 }
 
-func (s *StubFood) Seed(c []Coordinate) {
+// Seed loads the c food values into FoodStub internal array.
+func (s *FoodStub) Seed(c []FoodStubValue) {
 	s.seedValues = c
 }

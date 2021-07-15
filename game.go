@@ -44,8 +44,8 @@ func (g *Game) eventRoutine() {
 		select {
 		case <-g.cloak.Tick():
 			result := g.handleMove(direction)
-			if !result {
-				g.resultC <- false
+			if result != nil {
+				g.resultC <- *result
 				return
 			}
 		case d := <-g.movesC:
@@ -56,10 +56,11 @@ func (g *Game) eventRoutine() {
 	}
 }
 
-func (g *Game) handleMove(d Direction) bool {
+func (g *Game) handleMove(d Direction) *bool {
+	result := false
 	err := g.snake.Move(d)
 	if err == ErrHeadOutOfBoard {
-		return false
+		return &result
 	}
 	coord := g.snake.GetCoordinates()
 	head := coord[0]
@@ -67,15 +68,16 @@ func (g *Game) handleMove(d Direction) bool {
 		err = g.snake.Grow()
 		coord = g.snake.GetCoordinates()
 		if err != nil {
-			return false
+			return &result
 		}
 		g.foodCoordinate, err = g.foodProducer.Generate(coord)
 		if err != nil {
-			return false
+			result = true
+			return &result
 		}
 	}
 	g.coordinatesC <- coord
-	return true
+	return nil
 }
 
 // SendMove sends d Direction to the internal Direction channel

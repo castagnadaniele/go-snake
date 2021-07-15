@@ -11,8 +11,13 @@ const (
 
 // FoodGenerator interface describes a food producer.
 //
-// Generate
+// Generate should return the coordinate of the next food
+// to spawn on the board (this new coordinate should not be contained
+// in c), or should return error if the board is full.
 type FoodGenerator interface {
+	// Generate should return the coordinate of the next food
+	// to spawn on the board (this new coordinate should not be contained
+	// in c), or should return error if the board is full.
 	Generate(c []Coordinate) (Coordinate, error)
 }
 

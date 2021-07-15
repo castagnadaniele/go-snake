@@ -46,15 +46,21 @@ type Snake struct {
 }
 
 // NewSnake returns a new Snake struct pointer initializing snake coordinates
-// and setting width and height of the board.
+// and setting width and height of the board and snake length 3.
 func NewSnake(width, height int) *Snake {
+	return NewSnakeOfLength(width, height, 3)
+}
+
+// NewSnakeOfLength returns a new Snake struct pointer initializing snake coordinates
+// and setting width and height of the board and snake length.
+func NewSnakeOfLength(width, height, length int) *Snake {
 	s := &Snake{width: width, height: height}
 	s.coordinates = make([]Coordinate, 3)
 	startX := int(math.Floor(float64(s.width) * 0.6))
 	startY := int(math.Floor(float64(s.height) * 0.5))
-	s.coordinates[0] = Coordinate{startX, startY}
-	s.coordinates[1] = Coordinate{startX + 1, startY}
-	s.coordinates[2] = Coordinate{startX + 2, startY}
+	for i := 0; i < length; i++ {
+		s.coordinates[i] = Coordinate{startX + i, startY}
+	}
 	s.faceDirection = Left
 	return s
 }
