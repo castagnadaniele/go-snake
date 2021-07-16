@@ -55,7 +55,7 @@ func NewSnake(width, height int) *Snake {
 // and setting width and height of the board and snake length.
 func NewSnakeOfLength(width, height, length int) *Snake {
 	s := &Snake{width: width, height: height}
-	s.coordinates = make([]Coordinate, 3)
+	s.coordinates = make([]Coordinate, length)
 	startX := int(math.Floor(float64(s.width) * 0.6))
 	startY := int(math.Floor(float64(s.height) * 0.5))
 	for i := 0; i < length; i++ {
