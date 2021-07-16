@@ -259,6 +259,18 @@ func TestGame(t *testing.T) {
 
 		c, r, fc = snake.WaitAndReceiveGameChannels(g)
 		assertNoFoodCoordinate(t, fc)
+		assertNoGameResult(t, r)
+		expectedSnakeCoordinates := []snake.Coordinate{
+			{1, 0},
+			{0, 0},
+			{0, 1},
+			{1, 1},
+		}
+		snake.AssertCoordinates(t, c, expectedSnakeCoordinates)
+		assertSnakeLength(t, c, 4)
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoFoodCoordinate(t, fc)
 		assertNoSnakeCoordinates(t, c)
 		if r == nil || *r == false {
 			t.Errorf("got result %v, want result %t", r, true)

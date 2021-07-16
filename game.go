@@ -83,6 +83,7 @@ func (g *Game) handleMove(d Direction) *bool {
 		g.foodCoordinate, err = g.foodProducer.Generate(coord)
 		if err != nil {
 			result = true
+			g.snakeCoordinatesC <- coord
 			return &result
 		}
 		g.foodC <- g.foodCoordinate
