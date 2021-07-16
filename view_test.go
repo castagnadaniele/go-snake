@@ -1,0 +1,57 @@
+package snake_test
+
+import (
+	"testing"
+
+	"github.com/castagnadaniele/go-snake"
+	"github.com/gdamore/tcell/v2"
+)
+
+func TestView(t *testing.T) {
+	width, height := 60, 60
+
+	t.Run("should display snake and food", func(t *testing.T) {
+		screen := tcell.NewSimulationScreen("UTF-8")
+		screen.Init()
+		screen.SetSize(width, height)
+		view := snake.NewView(screen)
+		snakeCoordinates := []snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
+		foodCoordinate := snake.Coordinate{6, 6}
+		view.Refresh(snakeCoordinates, foodCoordinate)
+
+		for i := 0; i < 3; i++ {
+			r, _, s, _ := screen.GetContent(i, 0)
+			assertCellRune(t, i, 0, r, snake.BodyRune)
+			fg, bg, _ := s.Decompose()
+			assertForegroundColor(t, i, 0, fg, snake.BodyForegroundColor)
+			assertBackgroundColor(t, i, 0, bg, snake.BodyBackgroundColor)
+		}
+		r, _, s, _ := screen.GetContent(foodCoordinate.X, foodCoordinate.Y)
+		assertCellRune(t, foodCoordinate.X, foodCoordinate.Y, r, snake.FoodRune)
+		fg, bg, _ := s.Decompose()
+		assertForegroundColor(t, foodCoordinate.X, foodCoordinate.Y, fg, snake.FoodForegroundColor)
+		assertBackgroundColor(t, foodCoordinate.X, foodCoordinate.Y, bg, snake.FoodBackgroundColor)
+		view.Release()
+	})
+}
+
+func assertCellRune(t testing.TB, x, y int, got rune, want rune) {
+	t.Helper()
+	if got != want {
+		t.Errorf("cell at [%d, %d] should contain a %c rune.", x, y, want)
+	}
+}
+
+func assertForegroundColor(t testing.TB, x, y int, got tcell.Color, want tcell.Color) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got foreground color %v at [%d, %d], want %v", got, x, y, want)
+	}
+}
+
+func assertBackgroundColor(t testing.TB, x, y int, got tcell.Color, want tcell.Color) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got background color %v at [%d, %d], want %v", got, x, y, want)
+	}
+}
