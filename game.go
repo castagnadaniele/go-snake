@@ -4,26 +4,24 @@ import "time"
 
 // Game coordinates the snake behaviour with the cloak ticks.
 type Game struct {
-	snake          *Snake
-	cloak          Cloak
-	foodProducer   FoodGenerator
-	coordinatesC   chan []Coordinate
-	movesC         chan Direction
-	resultC        chan bool
-	foodCoordinate Coordinate
+	snake             *Snake
+	cloak             Cloak
+	foodProducer      FoodGenerator
+	snakeCoordinatesC chan []Coordinate
+	movesC            chan Direction
+	resultC           chan bool
+	foodCoordinate    Coordinate
+	foodC             chan Coordinate
 }
 
 // NewGame returns a pointer to Game, which handles snake
 // methods on cloak ticks
-func NewGame(snake *Snake, cloak Cloak, foodProducer FoodGenerator) (*Game, error) {
+func NewGame(snake *Snake, cloak Cloak, foodProducer FoodGenerator) *Game {
 	coordinatesChannel := make(chan []Coordinate)
 	movesChannel := make(chan Direction)
 	resultChannel := make(chan bool)
-	food, err := foodProducer.Generate(snake.GetCoordinates())
-	if err != nil {
-		return nil, err
-	}
-	return &Game{snake, cloak, foodProducer, coordinatesChannel, movesChannel, resultChannel, food}, nil
+	foodChannel := make(chan Coordinate)
+	return &Game{snake, cloak, foodProducer, coordinatesChannel, movesChannel, resultChannel, Coordinate{}, foodChannel}
 }
 
 // Start starts cloak to tick every d time.Duration,
@@ -36,10 +34,12 @@ func (g *Game) Start(d time.Duration) {
 }
 
 func (g *Game) eventRoutine() {
-	defer close(g.coordinatesC)
+	defer close(g.snakeCoordinatesC)
 	defer close(g.movesC)
 	defer close(g.resultC)
+	defer close(g.foodC)
 	direction := g.snake.Face()
+	g.sendInitSnakeAndFoodCoordinates()
 	for {
 		select {
 		case <-g.cloak.Tick():
@@ -54,6 +54,16 @@ func (g *Game) eventRoutine() {
 			}
 		}
 	}
+}
+
+func (g *Game) sendInitSnakeAndFoodCoordinates() {
+	g.snakeCoordinatesC <- g.snake.GetCoordinates()
+	var err error
+	g.foodCoordinate, err = g.foodProducer.Generate(g.snake.GetCoordinates())
+	if err != nil {
+		panic(err)
+	}
+	g.foodC <- g.foodCoordinate
 }
 
 func (g *Game) handleMove(d Direction) *bool {
@@ -75,8 +85,9 @@ func (g *Game) handleMove(d Direction) *bool {
 			result = true
 			return &result
 		}
+		g.foodC <- g.foodCoordinate
 	}
-	g.coordinatesC <- coord
+	g.snakeCoordinatesC <- coord
 	return nil
 }
 
@@ -86,13 +97,17 @@ func (g *Game) SendMove(d Direction) {
 	g.movesC <- d
 }
 
-// ReceiveResult returns a ([]Coordinate, *bool) tuple with snake moves
-// or game result. It waits to receive values from the game internal channels.
-func (g *Game) ReceiveResult() (coordinate []Coordinate, result *bool) {
-	select {
-	case c := <-g.coordinatesC:
-		return c, nil
-	case r := <-g.resultC:
-		return nil, &r
-	}
+// ReceiveSnakeCoordinates returns the snake coordinates receive channel.
+func (g *Game) ReceiveSnakeCoordinates() <-chan []Coordinate {
+	return g.snakeCoordinatesC
+}
+
+// ReceiveFoodCoordinate returns the food coordinate receive channel.
+func (g *Game) ReceiveFoodCoordinate() <-chan Coordinate {
+	return g.foodC
+}
+
+// ReceiveGameResult returns the game result receive channel.
+func (g *Game) ReceiveGameResult() <-chan bool {
+	return g.resultC
 }

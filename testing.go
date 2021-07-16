@@ -5,7 +5,16 @@ import (
 	"testing"
 )
 
-// AssertCoordinates asserts that got and want coordinates are deep equal
+// AssertCoordinate asserts that got coordinate and want coordiante are equal.
+func AssertCoordinate(t testing.TB, got Coordinate, want Coordinate) {
+	t.Helper()
+
+	if got.X != want.X || got.Y != want.Y {
+		t.Errorf("got %v coordinate, want %v coordinate", got, want)
+	}
+}
+
+// AssertCoordinates asserts that got and want coordinates are deep equal.
 func AssertCoordinates(t testing.TB, got []Coordinate, want []Coordinate) {
 	t.Helper()
 
@@ -14,7 +23,7 @@ func AssertCoordinates(t testing.TB, got []Coordinate, want []Coordinate) {
 	}
 }
 
-// AssertNoError asserts that got is nil
+// AssertNoError asserts that got is nil.
 func AssertNoError(t testing.TB, got error) {
 	t.Helper()
 	if got != nil {
@@ -22,7 +31,7 @@ func AssertNoError(t testing.TB, got error) {
 	}
 }
 
-// AssertError asserts that got is the error I want
+// AssertError asserts that got is the error I want.
 func AssertError(t testing.TB, got error, want error) {
 	t.Helper()
 
@@ -35,11 +44,24 @@ func AssertError(t testing.TB, got error, want error) {
 	}
 }
 
-// AssertDirection asserts that the direction I got is the direction I want
+// AssertDirection asserts that the direction I got is the direction I want.
 func AssertDirection(t testing.TB, got Direction, want Direction) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %q direction, want %q direction", got, want)
+	}
+}
+
+// WaitAndReceiveGameChannels returns a ([]Coordinate, *bool, *Coordinate) tuple with snake coordinates
+// or game result or food coordinate. It waits to receive values from the game exposed receive channels.
+func WaitAndReceiveGameChannels(g *Game) (snakeCoordinate []Coordinate, gameResult *bool, foodCoordinate *Coordinate) {
+	select {
+	case c := <-g.ReceiveSnakeCoordinates():
+		return c, nil, nil
+	case r := <-g.ReceiveGameResult():
+		return nil, &r, nil
+	case f := <-g.ReceiveFoodCoordinate():
+		return nil, nil, &f
 	}
 }
 

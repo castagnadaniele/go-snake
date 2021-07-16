@@ -9,20 +9,33 @@ import (
 
 func TestGame(t *testing.T) {
 	width, height := 60, 60
-	f := snake.NewFood(width, height)
+	fs := &snake.FoodStub{}
+	fs.Seed([]snake.FoodStubValue{
+		{snake.Coordinate{0, 0}, nil},
+		{snake.Coordinate{1, 0}, nil},
+		{snake.Coordinate{2, 0}, nil},
+		{snake.Coordinate{3, 0}, nil},
+		{snake.Coordinate{4, 0}, nil},
+		{snake.Coordinate{5, 0}, nil},
+		{snake.Coordinate{6, 0}, nil},
+	})
 
 	t.Run("should start game", func(t *testing.T) {
 		s := snake.NewSnake(width, height)
+		snakeInitCoordinates := s.GetCoordinates()
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g, err := snake.NewGame(s, cloak, f)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, fs)
 		g.Start(time.Microsecond)
 
+		sc, _, _ := snake.WaitAndReceiveGameChannels(g)
+		snake.AssertCoordinates(t, sc, snakeInitCoordinates)
+		_, _, fc := snake.WaitAndReceiveGameChannels(g)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{0, 0})
 		cloak.AddTick()
-		g.ReceiveResult()
+		snake.WaitAndReceiveGameChannels(g)
 		cloak.AddTick()
-		got, r := g.ReceiveResult()
+		got, r, _ := snake.WaitAndReceiveGameChannels(g)
 		want := []snake.Coordinate{
 			{34, 30},
 			{35, 30},
@@ -36,12 +49,17 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(width, height)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g, err := snake.NewGame(s, cloak, f)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, fs)
 		g.Start(time.Microsecond)
 
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
+
 		cloak.AddTick()
-		got, r := g.ReceiveResult()
+
+		got, r, _ := snake.WaitAndReceiveGameChannels(g)
 		want := []snake.Coordinate{
 			{35, 30},
 			{36, 30},
@@ -52,7 +70,8 @@ func TestGame(t *testing.T) {
 
 		g.SendMove(snake.Up)
 		cloak.AddTick()
-		got, r = g.ReceiveResult()
+
+		got, r, _ = snake.WaitAndReceiveGameChannels(g)
 		want = []snake.Coordinate{
 			{35, 29},
 			{35, 30},
@@ -66,13 +85,18 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(width, height)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g, err := snake.NewGame(s, cloak, f)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, fs)
 		g.Start(time.Microsecond)
+
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
 
 		g.SendMove(snake.Right)
 		cloak.AddTick()
-		got, r := g.ReceiveResult()
+
+		got, r, _ := snake.WaitAndReceiveGameChannels(g)
 		want := []snake.Coordinate{
 			{35, 30},
 			{36, 30},
@@ -86,18 +110,22 @@ func TestGame(t *testing.T) {
 		s := snake.NewSnake(10, 10)
 		cloak := NewStubCloak()
 		defer cloak.Stop()
-		g, err := snake.NewGame(s, cloak, f)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, fs)
 		g.Start(time.Microsecond)
+
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
 
 		for i := 0; i < 6; i++ {
 			cloak.AddTick()
-			g.ReceiveResult()
+			snake.WaitAndReceiveGameChannels(g)
 		}
 
 		cloak.AddTick()
-		_, result := g.ReceiveResult()
 
+		_, result, _ := snake.WaitAndReceiveGameChannels(g)
 		if result == nil {
 			t.Fatal("should have got a boolean pointer, got nil")
 		}
@@ -117,13 +145,24 @@ func TestGame(t *testing.T) {
 			{snake.Coordinate{4, 5}, nil},
 			{snake.Coordinate{3, 5}, nil},
 		})
-		g, err := snake.NewGame(s, cloak, sf)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, sf)
 		g.Start(time.Microsecond)
+
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
+
 		cloak.AddTick()
 
-		c, r := g.ReceiveResult()
+		c, r, fc := snake.WaitAndReceiveGameChannels(g)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{4, 5})
 		assertNoGameResult(t, r)
+		assertNoSnakeCoordinates(t, c)
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoGameResult(t, r)
+		assertNoFoodCoordinate(t, fc)
 		assertSnakeLength(t, c, 4)
 	})
 
@@ -138,18 +177,37 @@ func TestGame(t *testing.T) {
 			{snake.Coordinate{3, 5}, nil},
 			{snake.Coordinate{2, 5}, nil},
 		})
-		g, err := snake.NewGame(s, cloak, sf)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, sf)
 		g.Start(time.Microsecond)
+
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
+
 		cloak.AddTick()
 
-		c, r := g.ReceiveResult()
+		c, r, fc := snake.WaitAndReceiveGameChannels(g)
 		assertNoGameResult(t, r)
+		assertNoSnakeCoordinates(t, c)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{4, 5})
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoGameResult(t, r)
+		assertNoFoodCoordinate(t, fc)
 		assertSnakeLength(t, c, 4)
+
 		cloak.AddTick()
-		c, r = g.ReceiveResult()
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoGameResult(t, r)
+		assertNoSnakeCoordinates(t, c)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{3, 5})
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
 		assertNoGameResult(t, r)
 		assertSnakeLength(t, c, 5)
+		assertNoFoodCoordinate(t, fc)
 	})
 
 	t.Run("game should end with a win when snake fills the entire board", func(t *testing.T) {
@@ -163,22 +221,45 @@ func TestGame(t *testing.T) {
 			{snake.Coordinate{1, 0}, nil},
 			{snake.Coordinate{1, 1}, snake.ErrBoardFull},
 		})
-		g, err := snake.NewGame(s, cloak, sf)
-		snake.AssertNoError(t, err)
+		g := snake.NewGame(s, cloak, sf)
 		g.Start(time.Microsecond)
 
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
+
 		cloak.AddTick()
-		_, r := g.ReceiveResult()
+
+		c, r, fc := snake.WaitAndReceiveGameChannels(g)
 		assertNoGameResult(t, r)
+		assertNoSnakeCoordinates(t, c)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{0, 0})
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoGameResult(t, r)
+		assertNoFoodCoordinate(t, fc)
+		assertSnakeLength(t, c, 2)
 
 		g.SendMove(snake.Up)
 		cloak.AddTick()
-		_, r = g.ReceiveResult()
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
 		assertNoGameResult(t, r)
+		assertNoSnakeCoordinates(t, c)
+		snake.AssertCoordinate(t, *fc, snake.Coordinate{1, 0})
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoGameResult(t, r)
+		assertNoFoodCoordinate(t, fc)
+		assertSnakeLength(t, c, 3)
 
 		g.SendMove(snake.Right)
 		cloak.AddTick()
-		_, r = g.ReceiveResult()
+
+		c, r, fc = snake.WaitAndReceiveGameChannels(g)
+		assertNoFoodCoordinate(t, fc)
+		assertNoSnakeCoordinates(t, c)
 		if r == nil || *r == false {
 			t.Errorf("got result %v, want result %t", r, true)
 		}
@@ -189,6 +270,20 @@ func assertNoGameResult(t testing.TB, result *bool) {
 	t.Helper()
 	if result != nil {
 		t.Fatalf("got result %v, want nil", result)
+	}
+}
+
+func assertNoSnakeCoordinates(t testing.TB, c []snake.Coordinate) {
+	t.Helper()
+	if c != nil {
+		t.Error("shouldn't have got snake coordinates")
+	}
+}
+
+func assertNoFoodCoordinate(t testing.TB, f *snake.Coordinate) {
+	t.Helper()
+	if f != nil {
+		t.Error("shouldn't have got food coordinate")
 	}
 }
 

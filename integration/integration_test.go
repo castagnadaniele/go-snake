@@ -12,8 +12,13 @@ func TestGameTicker(t *testing.T) {
 		s := snake.NewSnake(60, 60)
 		cloak := snake.NewCloak()
 		f := &snake.FoodStub{}
-		g, err := snake.NewGame(s, cloak, f)
-		snake.AssertNoError(t, err)
+		f.Seed([]snake.FoodStubValue{
+			{Coord: snake.Coordinate{X: 0, Y: 0}, Err: nil},
+			{Coord: snake.Coordinate{X: 1, Y: 0}, Err: nil},
+			{Coord: snake.Coordinate{X: 2, Y: 0}, Err: nil},
+			{Coord: snake.Coordinate{X: 3, Y: 0}, Err: nil},
+		})
+		g := snake.NewGame(s, cloak, f)
 
 		g.Start(2 * time.Millisecond)
 
@@ -22,8 +27,13 @@ func TestGameTicker(t *testing.T) {
 			cloak.Stop()
 		}()
 
-		g.ReceiveResult()
-		got, _ := g.ReceiveResult()
+		// skip init snake coordinates send
+		snake.WaitAndReceiveGameChannels(g)
+		// skip init food coordinate send
+		snake.WaitAndReceiveGameChannels(g)
+
+		snake.WaitAndReceiveGameChannels(g)
+		got, _, _ := snake.WaitAndReceiveGameChannels(g)
 		want := []snake.Coordinate{
 			{X: 34, Y: 30},
 			{X: 35, Y: 30},
