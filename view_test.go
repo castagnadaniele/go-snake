@@ -9,13 +9,13 @@ import (
 
 func TestView(t *testing.T) {
 	width, height := 60, 60
+	snakeCoordinates := []snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
 
 	t.Run("should display snake and food", func(t *testing.T) {
 		screen := tcell.NewSimulationScreen("UTF-8")
 		screen.Init()
 		screen.SetSize(width, height)
 		view := snake.NewView(screen)
-		snakeCoordinates := []snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
 		foodCoordinate := snake.Coordinate{6, 6}
 		view.Refresh(snakeCoordinates, foodCoordinate)
 
@@ -33,12 +33,29 @@ func TestView(t *testing.T) {
 		assertBackgroundColor(t, foodCoordinate.X, foodCoordinate.Y, bg, snake.FoodBackgroundColor)
 		view.Release()
 	})
+
+	t.Run("should display snake over food", func(t *testing.T) {
+		screen := tcell.NewSimulationScreen("UTF-8")
+		screen.Init()
+		screen.SetSize(width, height)
+		view := snake.NewView(screen)
+		foodCoordinate := snake.Coordinate{0, 0}
+		view.Refresh(snakeCoordinates, foodCoordinate)
+
+		r, _, s, _ := screen.GetContent(0, 0)
+		assertCellRune(t, 0, 0, r, snake.BodyRune)
+		fg, bg, _ := s.Decompose()
+		assertForegroundColor(t, 0, 0, fg, snake.BodyForegroundColor)
+		assertBackgroundColor(t, 0, 0, bg, snake.BodyBackgroundColor)
+
+		view.Release()
+	})
 }
 
 func assertCellRune(t testing.TB, x, y int, got rune, want rune) {
 	t.Helper()
 	if got != want {
-		t.Errorf("cell at [%d, %d] should contain a %c rune.", x, y, want)
+		t.Errorf("cell at [%d, %d] should contain a %c rune, got %c.", x, y, want, got)
 	}
 }
 
