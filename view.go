@@ -11,12 +11,24 @@ const FoodBackgroundColor = tcell.ColorBlack
 
 // View struct which prints the snake game elements on terminal.
 type View struct {
-	screen tcell.Screen
+	screen      tcell.Screen
+	directionC  chan Direction
+	eventsC     chan tcell.Event
+	quitEventsC chan struct{}
 }
 
-// NewView returns a View struct pointer setting the screen.
+// NewView returns a View struct pointer setting the screen,
+// starting the screen events loop channel in a go routine
+// and starts polling the screen events channel for directions
+// in another go routine.
 func NewView(screen tcell.Screen) *View {
-	return &View{screen}
+	directionChannel := make(chan Direction)
+	eventsChannel := make(chan tcell.Event)
+	quitEventsC := make(chan struct{})
+	go screen.ChannelEvents(eventsChannel, quitEventsC)
+	view := &View{screen, directionChannel, eventsChannel, quitEventsC}
+	go view.pollDirectionKeys()
+	return view
 }
 
 // Refresh clears the screen, then prints the snake body on
@@ -35,5 +47,32 @@ func (v *View) Refresh(snakeCoordinates []Coordinate, foodCoordinate Coordinate)
 
 // Release releases the underlying screen resources.
 func (v *View) Release() {
+	// Screen.ChannelEvents will close v.eventsC after we close v.quitEventsC
+	close(v.quitEventsC)
+	close(v.directionC)
 	v.screen.Fini()
+}
+
+// ReceiveDirection returns a Direction receiver channel
+// which will be fed when the screen will receive
+// directional key events.
+func (v *View) ReceiveDirection() <-chan Direction {
+	return v.directionC
+}
+
+func (v *View) pollDirectionKeys() {
+	for e := range v.eventsC {
+		if keyEvent, ok := e.(*tcell.EventKey); ok {
+			switch keyEvent.Key() {
+			case tcell.KeyUp:
+				v.directionC <- Up
+			case tcell.KeyDown:
+				v.directionC <- Down
+			case tcell.KeyRight:
+				v.directionC <- Right
+			case tcell.KeyLeft:
+				v.directionC <- Left
+			}
+		}
+	}
 }

@@ -1,6 +1,7 @@
 package snake_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/castagnadaniele/go-snake"
@@ -50,6 +51,32 @@ func TestView(t *testing.T) {
 
 		view.Release()
 	})
+
+	directionTestCases := []struct {
+		key tcell.Key
+		dir snake.Direction
+	}{
+		{tcell.KeyUp, snake.Up},
+		{tcell.KeyDown, snake.Down},
+		{tcell.KeyRight, snake.Right},
+		{tcell.KeyLeft, snake.Left},
+	}
+
+	for _, tc := range directionTestCases {
+		t.Run(fmt.Sprintf("should send %v key and get %v input", tc.key, tc.dir), func(t *testing.T) {
+			screen := tcell.NewSimulationScreen("UTF-8")
+			screen.Init()
+			screen.SetSize(width, height)
+			view := snake.NewView(screen)
+
+			screen.InjectKey(tc.key, rune(tc.key), tcell.ModNone)
+			direction := <-view.ReceiveDirection()
+
+			snake.AssertDirection(t, direction, tc.dir)
+
+			view.Release()
+		})
+	}
 }
 
 func assertCellRune(t testing.TB, x, y int, got rune, want rune) {
