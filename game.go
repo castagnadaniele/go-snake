@@ -76,17 +76,18 @@ func (g *Game) handleMove(d Direction) *bool {
 	head := coord[0]
 	if head.X == g.foodCoordinate.X && head.Y == g.foodCoordinate.Y {
 		err = g.snake.Grow()
-		coord = g.snake.GetCoordinates()
 		if err != nil {
 			return &result
 		}
+		coord = g.snake.GetCoordinates()
+		g.snakeCoordinatesC <- coord
 		g.foodCoordinate, err = g.foodProducer.Generate(coord)
 		if err != nil {
 			result = true
-			g.snakeCoordinatesC <- coord
 			return &result
 		}
 		g.foodC <- g.foodCoordinate
+		return nil
 	}
 	g.snakeCoordinatesC <- coord
 	return nil
