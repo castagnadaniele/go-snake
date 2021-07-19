@@ -14,7 +14,8 @@ func TestView(t *testing.T) {
 
 	t.Run("should display snake and food", func(t *testing.T) {
 		screen := tcell.NewSimulationScreen("UTF-8")
-		screen.Init()
+		err := screen.Init()
+		snake.AssertNoError(t, err)
 		screen.SetSize(width, height)
 		view := snake.NewView(screen)
 		foodCoordinate := snake.Coordinate{6, 6}
@@ -37,7 +38,8 @@ func TestView(t *testing.T) {
 
 	t.Run("should display snake over food", func(t *testing.T) {
 		screen := tcell.NewSimulationScreen("UTF-8")
-		screen.Init()
+		err := screen.Init()
+		snake.AssertNoError(t, err)
 		screen.SetSize(width, height)
 		view := snake.NewView(screen)
 		foodCoordinate := snake.Coordinate{0, 0}
@@ -65,7 +67,8 @@ func TestView(t *testing.T) {
 	for _, tc := range directionTestCases {
 		t.Run(fmt.Sprintf("should send %v key and get %v input", tc.key, tc.dir), func(t *testing.T) {
 			screen := tcell.NewSimulationScreen("UTF-8")
-			screen.Init()
+			err := screen.Init()
+			snake.AssertNoError(t, err)
 			screen.SetSize(width, height)
 			view := snake.NewView(screen)
 
