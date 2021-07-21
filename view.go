@@ -13,7 +13,7 @@ const FoodBackgroundColor = tcell.ColorBlack
 // screen refresh and how should expose snake's change direction input.
 type ViewHandler interface {
 	// Refresh should receive the snake and food coordinates and should display them.
-	Refresh(snakeCoordinates []Coordinate, foodCoordinate Coordinate)
+	Refresh(snakeCoordinates *[]Coordinate, foodCoordinate *Coordinate)
 	// ReceiveDirection should return a Direction receiver channel on which the ViewHandler
 	// should send new change direction input from the user.
 	ReceiveDirection() <-chan Direction
@@ -44,13 +44,21 @@ func NewView(screen tcell.Screen) *View {
 // Refresh clears the screen, then prints the snake body on
 // the snake coordinates and the food on the food coordinates.
 // The snake body will be printed overwriting the food, if their coordinates overlap.
-func (v *View) Refresh(snakeCoordinates []Coordinate, foodCoordinate Coordinate) {
+// It will not print the respective coordinates if the snake or the food coordinates are nil.
+func (v *View) Refresh(snakeCoordinates *[]Coordinate, foodCoordinate *Coordinate) {
+	if snakeCoordinates == nil && foodCoordinate == nil {
+		return
+	}
 	v.screen.Clear()
-	foodStyle := tcell.StyleDefault.Foreground(FoodForegroundColor).Background(FoodBackgroundColor)
-	v.screen.SetContent(foodCoordinate.X, foodCoordinate.Y, FoodRune, nil, foodStyle)
-	snakeStyle := tcell.StyleDefault.Foreground(BodyForegroundColor).Background(BodyBackgroundColor)
-	for _, c := range snakeCoordinates {
-		v.screen.SetContent(c.X, c.Y, BodyRune, nil, snakeStyle)
+	if foodCoordinate != nil {
+		foodStyle := tcell.StyleDefault.Foreground(FoodForegroundColor).Background(FoodBackgroundColor)
+		v.screen.SetContent(foodCoordinate.X, foodCoordinate.Y, FoodRune, nil, foodStyle)
+	}
+	if snakeCoordinates != nil {
+		snakeStyle := tcell.StyleDefault.Foreground(BodyForegroundColor).Background(BodyBackgroundColor)
+		for _, c := range *snakeCoordinates {
+			v.screen.SetContent(c.X, c.Y, BodyRune, nil, snakeStyle)
+		}
 	}
 	v.screen.Show()
 }

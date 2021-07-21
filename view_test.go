@@ -10,7 +10,7 @@ import (
 
 func TestView(t *testing.T) {
 	width, height := 60, 60
-	snakeCoordinates := []snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
+	snakeCoordinates := &[]snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
 
 	t.Run("should display snake and food", func(t *testing.T) {
 		screen := tcell.NewSimulationScreen("UTF-8")
@@ -18,7 +18,7 @@ func TestView(t *testing.T) {
 		snake.AssertNoError(t, err)
 		screen.SetSize(width, height)
 		view := snake.NewView(screen)
-		foodCoordinate := snake.Coordinate{6, 6}
+		foodCoordinate := &snake.Coordinate{6, 6}
 		view.Refresh(snakeCoordinates, foodCoordinate)
 
 		for i := 0; i < 3; i++ {
@@ -42,7 +42,7 @@ func TestView(t *testing.T) {
 		snake.AssertNoError(t, err)
 		screen.SetSize(width, height)
 		view := snake.NewView(screen)
-		foodCoordinate := snake.Coordinate{0, 0}
+		foodCoordinate := &snake.Coordinate{0, 0}
 		view.Refresh(snakeCoordinates, foodCoordinate)
 
 		r, _, s, _ := screen.GetContent(0, 0)
@@ -80,6 +80,38 @@ func TestView(t *testing.T) {
 			view.Release()
 		})
 	}
+
+	t.Run("should not display snake if it is nil", func(t *testing.T) {
+		screen := tcell.NewSimulationScreen("UTF-8")
+		err := screen.Init()
+		snake.AssertNoError(t, err)
+		screen.SetSize(width, height)
+		view := snake.NewView(screen)
+
+		view.Refresh(nil, &snake.Coordinate{0, 0})
+		cells, _, _ := screen.GetContents()
+		for _, c := range cells {
+			if c.Runes[0] == snake.BodyRune {
+				t.Fatalf("got snake body rune")
+			}
+		}
+	})
+
+	t.Run("should not display food if it is nil", func(t *testing.T) {
+		screen := tcell.NewSimulationScreen("UTF-8")
+		err := screen.Init()
+		snake.AssertNoError(t, err)
+		screen.SetSize(width, height)
+		view := snake.NewView(screen)
+
+		view.Refresh(snakeCoordinates, nil)
+		cells, _, _ := screen.GetContents()
+		for _, c := range cells {
+			if c.Runes[0] == snake.FoodRune {
+				t.Fatalf("got food rune")
+			}
+		}
+	})
 }
 
 func assertCellRune(t testing.TB, x, y int, got rune, want rune) {
