@@ -2,6 +2,28 @@ package snake
 
 import "time"
 
+// GameDirector interface defines how to coordinate the snake and food
+// interaction in a game.
+type GameDirector interface {
+	// Start should exec a new snake move after an interval, should handle
+	// snake collision with food, should handle new food generation and should
+	// change snake face direction on user input.
+	//
+	// Start should run a go routine which does the above operations.
+	Start(d time.Duration)
+	// SendMove should send the new direction in an internal channel.
+	SendMove(d Direction)
+	// ReceiveSnakeCoordinates should expose a receiver channel which emits
+	// the new snake coordinates after each interval.
+	ReceiveSnakeCoordinates() <-chan []Coordinate
+	// ReceiveFoodCoordinate should expose a receiver channel which emits
+	// the new food coordinate after the snake eats the food.
+	ReceiveFoodCoordinate() <-chan Coordinate
+	// ReceiveGameResult should expose a receiver channel which emits
+	// when the game is won or is lost.
+	ReceiveGameResult() <-chan bool
+}
+
 // Game coordinates the snake behaviour with the cloak ticks.
 type Game struct {
 	snake             *Snake

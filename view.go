@@ -9,6 +9,16 @@ const FoodRune = '◆'
 const FoodForegroundColor = tcell.ColorRed
 const FoodBackgroundColor = tcell.ColorBlack
 
+// ViewHandler interface defines how a view should handle
+// screen refresh and how should expose snake's change direction input.
+type ViewHandler interface {
+	// Refresh should receive the snake and food coordinates and should display them.
+	Refresh(snakeCoordinates []Coordinate, foodCoordinate Coordinate)
+	// ReceiveDirection should return a Direction receiver channel on which the ViewHandler
+	// should send new change direction input from the user.
+	ReceiveDirection() <-chan Direction
+}
+
 // View struct which prints the snake game elements on terminal.
 type View struct {
 	screen      tcell.Screen
