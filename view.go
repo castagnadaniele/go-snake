@@ -8,6 +8,8 @@ const BodyBackgroundColor = tcell.ColorGray
 const FoodRune = '◆'
 const FoodForegroundColor = tcell.ColorRed
 const FoodBackgroundColor = tcell.ColorBlack
+const WinMessage = "Game won! Press SPACEBAR to start a new game or press Q to quit..."
+const LoseMessage = "Game lost! Press SPACEBAR to start a new game or press Q to quit..."
 
 // ViewHandler interface defines how a view should handle
 // screen refresh and how should expose snake's change direction input.
@@ -78,6 +80,16 @@ func (v *View) ReceiveDirection() <-chan Direction {
 	return v.directionC
 }
 
+// DisplayWin clears the screen and displays a win message.
+func (v *View) DisplayWin() {
+	v.printMessage(WinMessage)
+}
+
+// DisplayLose clears the screen and displays a lose message.
+func (v *View) DisplayLose() {
+	v.printMessage(LoseMessage)
+}
+
 func (v *View) pollDirectionKeys() {
 	for e := range v.eventsC {
 		if keyEvent, ok := e.(*tcell.EventKey); ok {
@@ -93,4 +105,19 @@ func (v *View) pollDirectionKeys() {
 			}
 		}
 	}
+}
+
+func (v *View) printMessage(message string) {
+	v.screen.Clear()
+	width, _ := v.screen.Size()
+	x, y := 0, 0
+	for _, c := range message {
+		if x >= width {
+			x = 0
+			y++
+		}
+		v.screen.SetContent(x, y, c, nil, tcell.StyleDefault)
+		x++
+	}
+	v.screen.Show()
 }

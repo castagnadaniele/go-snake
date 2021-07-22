@@ -13,12 +13,9 @@ func TestView(t *testing.T) {
 	snakeCoordinates := &[]snake.Coordinate{{0, 0}, {1, 0}, {2, 0}}
 
 	t.Run("should display snake and food", func(t *testing.T) {
-		screen := tcell.NewSimulationScreen("UTF-8")
-		err := screen.Init()
-		snake.AssertNoError(t, err)
-		screen.SetSize(width, height)
-		view := snake.NewView(screen)
+		view, screen := initView(t, width, height)
 		foodCoordinate := &snake.Coordinate{6, 6}
+
 		view.Refresh(snakeCoordinates, foodCoordinate)
 
 		for i := 0; i < 3; i++ {
@@ -37,12 +34,9 @@ func TestView(t *testing.T) {
 	})
 
 	t.Run("should display snake over food", func(t *testing.T) {
-		screen := tcell.NewSimulationScreen("UTF-8")
-		err := screen.Init()
-		snake.AssertNoError(t, err)
-		screen.SetSize(width, height)
-		view := snake.NewView(screen)
+		view, screen := initView(t, width, height)
 		foodCoordinate := &snake.Coordinate{0, 0}
+
 		view.Refresh(snakeCoordinates, foodCoordinate)
 
 		r, _, s, _ := screen.GetContent(0, 0)
@@ -66,11 +60,7 @@ func TestView(t *testing.T) {
 
 	for _, tc := range directionTestCases {
 		t.Run(fmt.Sprintf("should send %v key and get %v input", tc.key, tc.dir), func(t *testing.T) {
-			screen := tcell.NewSimulationScreen("UTF-8")
-			err := screen.Init()
-			snake.AssertNoError(t, err)
-			screen.SetSize(width, height)
-			view := snake.NewView(screen)
+			view, screen := initView(t, width, height)
 
 			screen.InjectKey(tc.key, rune(tc.key), tcell.ModNone)
 			direction := <-view.ReceiveDirection()
@@ -82,11 +72,7 @@ func TestView(t *testing.T) {
 	}
 
 	t.Run("should not display snake if it is nil", func(t *testing.T) {
-		screen := tcell.NewSimulationScreen("UTF-8")
-		err := screen.Init()
-		snake.AssertNoError(t, err)
-		screen.SetSize(width, height)
-		view := snake.NewView(screen)
+		view, screen := initView(t, width, height)
 
 		view.Refresh(nil, &snake.Coordinate{0, 0})
 		cells, _, _ := screen.GetContents()
@@ -98,11 +84,7 @@ func TestView(t *testing.T) {
 	})
 
 	t.Run("should not display food if it is nil", func(t *testing.T) {
-		screen := tcell.NewSimulationScreen("UTF-8")
-		err := screen.Init()
-		snake.AssertNoError(t, err)
-		screen.SetSize(width, height)
-		view := snake.NewView(screen)
+		view, screen := initView(t, width, height)
 
 		view.Refresh(snakeCoordinates, nil)
 		cells, _, _ := screen.GetContents()
@@ -110,6 +92,36 @@ func TestView(t *testing.T) {
 			if c.Runes[0] == snake.FoodRune {
 				t.Fatalf("got food rune")
 			}
+		}
+	})
+
+	t.Run("should display win", func(t *testing.T) {
+		view, screen := initView(t, width, height)
+
+		view.DisplayWin()
+		i := 0
+		cells, _, _ := screen.GetContents()
+		for _, c := range snake.WinMessage {
+			got := cells[i].Runes[0]
+			if got != c {
+				t.Fatalf("got %c rune, want %c rune", got, c)
+			}
+			i++
+		}
+	})
+
+	t.Run("should display lose", func(t *testing.T) {
+		view, screen := initView(t, width, height)
+
+		view.DisplayLose()
+		i := 0
+		cells, _, _ := screen.GetContents()
+		for _, c := range snake.LoseMessage {
+			got := cells[i].Runes[0]
+			if got != c {
+				t.Fatalf("got %c rune, want %c rune", got, c)
+			}
+			i++
 		}
 	})
 }
@@ -133,4 +145,14 @@ func assertBackgroundColor(t testing.TB, x, y int, got tcell.Color, want tcell.C
 	if got != want {
 		t.Errorf("got background color %v at [%d, %d], want %v", got, x, y, want)
 	}
+}
+
+func initView(t testing.TB, width, height int) (*snake.View, tcell.SimulationScreen) {
+	t.Helper()
+	screen := tcell.NewSimulationScreen("UTF-8")
+	err := screen.Init()
+	snake.AssertNoError(t, err)
+	screen.SetSize(width, height)
+	view := snake.NewView(screen)
+	return view, screen
 }
