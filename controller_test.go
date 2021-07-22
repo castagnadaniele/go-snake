@@ -103,6 +103,42 @@ func TestController(t *testing.T) {
 		snake.AssertCoordinates(t, *gotSnake, snakeCoordinates)
 		snake.AssertCoordinate(t, *gotFood, foodCoordinate)
 	})
+
+	t.Run("should display win when game send win result", func(t *testing.T) {
+		view := NewViewSpy()
+		game := NewGameSpy()
+		controller := snake.NewController(game, view)
+
+		go controller.Start(time.Microsecond)
+
+		game.ResultC <- true
+		select {
+		case <-view.WinC:
+			break
+		case <-view.LoseC:
+			t.Error("view should have displayed a win instead of a lose")
+		case <-time.After(time.Millisecond * 5):
+			t.Error("view should have displayed a win")
+		}
+	})
+
+	t.Run("should display lose when game send lose result", func(t *testing.T) {
+		view := NewViewSpy()
+		game := NewGameSpy()
+		controller := snake.NewController(game, view)
+
+		go controller.Start(time.Microsecond)
+
+		game.ResultC <- false
+		select {
+		case <-view.LoseC:
+			break
+		case <-view.WinC:
+			t.Error("view should have diplayed a lose instead of a win")
+		case <-time.After(time.Millisecond * 5):
+			t.Error("view should have displayed a lose")
+		}
+	})
 }
 
 type GameSpy struct {
@@ -157,16 +193,22 @@ type ViewSpy struct {
 	DirectionC        chan snake.Direction
 	SnakeCoordinatesC chan *[]snake.Coordinate
 	FoodCoordinateC   chan *snake.Coordinate
+	WinC              chan struct{}
+	LoseC             chan struct{}
 }
 
 func NewViewSpy() *ViewSpy {
 	directionChannel := make(chan snake.Direction)
 	snakeChannel := make(chan *[]snake.Coordinate)
 	foodChannel := make(chan *snake.Coordinate)
+	winChannel := make(chan struct{})
+	loseChannel := make(chan struct{})
 	return &ViewSpy{
 		DirectionC:        directionChannel,
 		SnakeCoordinatesC: snakeChannel,
 		FoodCoordinateC:   foodChannel,
+		WinC:              winChannel,
+		LoseC:             loseChannel,
 	}
 }
 
@@ -177,6 +219,14 @@ func (v *ViewSpy) Refresh(snakeCoordinates *[]snake.Coordinate, foodCoordinate *
 
 func (v *ViewSpy) ReceiveDirection() <-chan snake.Direction {
 	return v.DirectionC
+}
+
+func (v *ViewSpy) DisplayWin() {
+	v.WinC <- struct{}{}
+}
+
+func (v *ViewSpy) DisplayLose() {
+	v.LoseC <- struct{}{}
 }
 
 func assertCoordinateNil(t testing.TB, got *snake.Coordinate) {

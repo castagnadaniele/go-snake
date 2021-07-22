@@ -19,6 +19,10 @@ type ViewHandler interface {
 	// ReceiveDirection should return a Direction receiver channel on which the ViewHandler
 	// should send new change direction input from the user.
 	ReceiveDirection() <-chan Direction
+	// DisplayWin should display a win screen.
+	DisplayWin()
+	// DisplayLose should display a lose screen.
+	DisplayLose()
 }
 
 // View struct which prints the snake game elements on terminal.

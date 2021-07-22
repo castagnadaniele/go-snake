@@ -16,8 +16,11 @@ func NewController(game GameDirector, view ViewHandler) *Controller {
 }
 
 // Start starts the controller internal game, then loops and waits on the view
-// direction channel, on the game snake coordinates receiver channel and on
-// the game food coordinate receiver channel.
+// direction channel, on the game snake coordinates receiver channel, on
+// the game food coordinate receiver channel and on the game result receiver channel.
+// When it receives a new direction from the view it sends it to the game.
+// When it receives new snake or food coordinates it refreshes the view screen.
+// When it receives a game result it display win or lose accordingly to the result.
 //
 // Should be used as a go routine.
 func (c *Controller) Start(d time.Duration) {
@@ -32,6 +35,12 @@ func (c *Controller) Start(d time.Duration) {
 		case fc := <-c.game.ReceiveFoodCoordinate():
 			c.lastFoodCoordinate = &fc
 			c.view.Refresh(c.lastSnakeCoordinate, c.lastFoodCoordinate)
+		case r := <-c.game.ReceiveGameResult():
+			if r {
+				c.view.DisplayWin()
+			} else {
+				c.view.DisplayLose()
+			}
 		}
 	}
 }
