@@ -31,6 +31,7 @@ type View struct {
 	directionC  chan Direction
 	eventsC     chan tcell.Event
 	quitEventsC chan struct{}
+	newGameC    chan struct{}
 }
 
 // NewView returns a View struct pointer setting the screen,
@@ -40,10 +41,11 @@ type View struct {
 func NewView(screen tcell.Screen) *View {
 	directionChannel := make(chan Direction)
 	eventsChannel := make(chan tcell.Event)
-	quitEventsC := make(chan struct{})
-	go screen.ChannelEvents(eventsChannel, quitEventsC)
-	view := &View{screen, directionChannel, eventsChannel, quitEventsC}
-	go view.pollDirectionKeys()
+	quitEventsChannel := make(chan struct{})
+	newGameChannel := make(chan struct{})
+	go screen.ChannelEvents(eventsChannel, quitEventsChannel)
+	view := &View{screen, directionChannel, eventsChannel, quitEventsChannel, newGameChannel}
+	go view.pollKeys()
 	return view
 }
 
@@ -74,6 +76,7 @@ func (v *View) Release() {
 	// Screen.ChannelEvents will close v.eventsC after we close v.quitEventsC
 	close(v.quitEventsC)
 	close(v.directionC)
+	close(v.newGameC)
 	v.screen.Fini()
 }
 
@@ -94,7 +97,13 @@ func (v *View) DisplayLose() {
 	v.printMessage(LoseMessage)
 }
 
-func (v *View) pollDirectionKeys() {
+// ReceiveNewGameSignal returns an empty struct receiver channel
+// which will signal when the user presses SPACEBAR to request a game restart.
+func (v *View) ReceiveNewGameSignal() <-chan struct{} {
+	return v.newGameC
+}
+
+func (v *View) pollKeys() {
 	for e := range v.eventsC {
 		if keyEvent, ok := e.(*tcell.EventKey); ok {
 			switch keyEvent.Key() {
@@ -106,6 +115,11 @@ func (v *View) pollDirectionKeys() {
 				v.directionC <- Right
 			case tcell.KeyLeft:
 				v.directionC <- Left
+			case tcell.KeyRune:
+				switch keyEvent.Rune() {
+				case ' ':
+					v.newGameC <- struct{}{}
+				}
 			}
 		}
 	}

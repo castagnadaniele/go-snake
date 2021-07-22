@@ -3,6 +3,7 @@ package snake_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/castagnadaniele/go-snake"
 	"github.com/gdamore/tcell/v2"
@@ -124,6 +125,19 @@ func TestView(t *testing.T) {
 				t.Fatalf("got %c rune, want %c rune", got, c)
 			}
 			i++
+		}
+	})
+
+	t.Run("should send new game signal on spacebar press", func(t *testing.T) {
+		view, screen := initView(t, width, height)
+		defer view.Release()
+
+		screen.InjectKey(tcell.KeyRune, ' ', tcell.ModNone)
+		select {
+		case <-view.ReceiveNewGameSignal():
+			break
+		case <-time.After(time.Millisecond * 5):
+			t.Error("should have received a new game signal")
 		}
 	})
 }
