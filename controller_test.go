@@ -18,8 +18,11 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		if !game.Started() {
-			t.Errorf("game should have started")
+		select {
+		case <-game.StartC:
+			break
+		case <-time.After(time.Millisecond * 5):
+			t.Error("game should have started")
 		}
 	})
 
@@ -142,7 +145,7 @@ func TestController(t *testing.T) {
 }
 
 type GameSpy struct {
-	startC            chan struct{}
+	StartC            chan struct{}
 	SnakeCoordinatesC chan []snake.Coordinate
 	FoodCoordinateC   chan snake.Coordinate
 	ResultC           chan bool
@@ -150,13 +153,13 @@ type GameSpy struct {
 }
 
 func NewGameSpy() *GameSpy {
-	startChannel := make(chan struct{})
+	startChannel := make(chan struct{}, 1)
 	snakeCoordiantesChannel := make(chan []snake.Coordinate)
 	foodCoordinatesChannel := make(chan snake.Coordinate)
 	resultChannel := make(chan bool)
 	moveChannel := make(chan snake.Direction)
 	return &GameSpy{
-		startC:            startChannel,
+		StartC:            startChannel,
 		SnakeCoordinatesC: snakeCoordiantesChannel,
 		FoodCoordinateC:   foodCoordinatesChannel,
 		ResultC:           resultChannel,
@@ -164,13 +167,8 @@ func NewGameSpy() *GameSpy {
 	}
 }
 
-func (g *GameSpy) Started() bool {
-	_, ok := <-g.startC
-	return !ok
-}
-
 func (g *GameSpy) Start(d time.Duration) {
-	close(g.startC)
+	g.StartC <- struct{}{}
 }
 
 func (g *GameSpy) SendMove(d snake.Direction) {
