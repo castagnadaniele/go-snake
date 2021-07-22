@@ -14,6 +14,7 @@ func TestView(t *testing.T) {
 
 	t.Run("should display snake and food", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 		foodCoordinate := &snake.Coordinate{6, 6}
 
 		view.Refresh(snakeCoordinates, foodCoordinate)
@@ -30,11 +31,11 @@ func TestView(t *testing.T) {
 		fg, bg, _ := s.Decompose()
 		assertForegroundColor(t, foodCoordinate.X, foodCoordinate.Y, fg, snake.FoodForegroundColor)
 		assertBackgroundColor(t, foodCoordinate.X, foodCoordinate.Y, bg, snake.FoodBackgroundColor)
-		view.Release()
 	})
 
 	t.Run("should display snake over food", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 		foodCoordinate := &snake.Coordinate{0, 0}
 
 		view.Refresh(snakeCoordinates, foodCoordinate)
@@ -44,8 +45,6 @@ func TestView(t *testing.T) {
 		fg, bg, _ := s.Decompose()
 		assertForegroundColor(t, 0, 0, fg, snake.BodyForegroundColor)
 		assertBackgroundColor(t, 0, 0, bg, snake.BodyBackgroundColor)
-
-		view.Release()
 	})
 
 	directionTestCases := []struct {
@@ -61,18 +60,18 @@ func TestView(t *testing.T) {
 	for _, tc := range directionTestCases {
 		t.Run(fmt.Sprintf("should send %v key and get %v input", tc.key, tc.dir), func(t *testing.T) {
 			view, screen := initView(t, width, height)
+			defer view.Release()
 
 			screen.InjectKey(tc.key, rune(tc.key), tcell.ModNone)
 			direction := <-view.ReceiveDirection()
 
 			snake.AssertDirection(t, direction, tc.dir)
-
-			view.Release()
 		})
 	}
 
 	t.Run("should not display snake if it is nil", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 
 		view.Refresh(nil, &snake.Coordinate{0, 0})
 		cells, _, _ := screen.GetContents()
@@ -85,6 +84,7 @@ func TestView(t *testing.T) {
 
 	t.Run("should not display food if it is nil", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 
 		view.Refresh(snakeCoordinates, nil)
 		cells, _, _ := screen.GetContents()
@@ -97,6 +97,7 @@ func TestView(t *testing.T) {
 
 	t.Run("should display win", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 
 		view.DisplayWin()
 		i := 0
@@ -112,6 +113,7 @@ func TestView(t *testing.T) {
 
 	t.Run("should display lose", func(t *testing.T) {
 		view, screen := initView(t, width, height)
+		defer view.Release()
 
 		view.DisplayLose()
 		i := 0
