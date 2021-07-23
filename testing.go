@@ -3,6 +3,7 @@ package snake
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 // AssertCoordinate asserts that got coordinate and want coordiante are equal.
@@ -54,7 +55,8 @@ func AssertDirection(t testing.TB, got Direction, want Direction) {
 
 // WaitAndReceiveGameChannels returns a ([]Coordinate, *bool, *Coordinate) tuple with snake coordinates
 // or game result or food coordinate. It waits to receive values from the game exposed receive channels.
-func WaitAndReceiveGameChannels(g *Game) (snakeCoordinate []Coordinate, gameResult *bool, foodCoordinate *Coordinate) {
+func WaitAndReceiveGameChannels(t testing.TB, g *Game) (snakeCoordinate []Coordinate, gameResult *bool, foodCoordinate *Coordinate) {
+	t.Helper()
 	select {
 	case c := <-g.ReceiveSnakeCoordinates():
 		return c, nil, nil
@@ -62,6 +64,9 @@ func WaitAndReceiveGameChannels(g *Game) (snakeCoordinate []Coordinate, gameResu
 		return nil, &r, nil
 	case f := <-g.ReceiveFoodCoordinate():
 		return nil, nil, &f
+	case <-time.After(time.Millisecond * 5):
+		t.Fatal("got nothing from game channels, want snake coordinates or food coordinate or game result")
+		return nil, nil, nil
 	}
 }
 

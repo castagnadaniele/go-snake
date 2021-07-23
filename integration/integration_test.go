@@ -28,12 +28,12 @@ func TestGameTicker(t *testing.T) {
 		}()
 
 		// skip init snake coordinates send
-		snake.WaitAndReceiveGameChannels(g)
+		snake.WaitAndReceiveGameChannels(t, g)
 		// skip init food coordinate send
-		snake.WaitAndReceiveGameChannels(g)
+		snake.WaitAndReceiveGameChannels(t, g)
 
-		snake.WaitAndReceiveGameChannels(g)
-		got, _, _ := snake.WaitAndReceiveGameChannels(g)
+		snake.WaitAndReceiveGameChannels(t, g)
+		got, _, _ := snake.WaitAndReceiveGameChannels(t, g)
 		want := []snake.Coordinate{
 			{X: 34, Y: 30},
 			{X: 35, Y: 30},
