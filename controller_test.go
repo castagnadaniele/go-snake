@@ -20,7 +20,6 @@ func TestController(t *testing.T) {
 
 		select {
 		case <-game.StartC:
-			break
 		case <-time.After(time.Millisecond * 5):
 			t.Error("game should have started")
 		}
@@ -117,7 +116,6 @@ func TestController(t *testing.T) {
 		game.ResultC <- true
 		select {
 		case <-view.WinC:
-			break
 		case <-view.LoseC:
 			t.Error("view should have displayed a win instead of a lose")
 		case <-time.After(time.Millisecond * 5):
@@ -135,7 +133,6 @@ func TestController(t *testing.T) {
 		game.ResultC <- false
 		select {
 		case <-view.LoseC:
-			break
 		case <-view.WinC:
 			t.Error("view should have diplayed a lose instead of a win")
 		case <-time.After(time.Millisecond * 5):

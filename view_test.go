@@ -135,9 +135,24 @@ func TestView(t *testing.T) {
 		screen.InjectKey(tcell.KeyRune, ' ', tcell.ModNone)
 		select {
 		case <-view.ReceiveNewGameSignal():
-			break
 		case <-time.After(time.Millisecond * 5):
 			t.Error("should have received a new game signal")
+		}
+	})
+
+	t.Run("should send quit game signal on Q press", func(t *testing.T) {
+		view, screen := initView(t, width, height)
+		defer view.Release()
+
+		keys := []rune{'q', 'Q'}
+
+		for _, r := range keys {
+			screen.InjectKey(tcell.KeyRune, r, tcell.ModNone)
+			select {
+			case <-view.ReceiveQuitSignal():
+			case <-time.After(time.Millisecond * 5):
+				t.Error("should have received a quit game signal")
+			}
 		}
 	})
 }

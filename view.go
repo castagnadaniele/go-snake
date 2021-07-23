@@ -32,6 +32,7 @@ type View struct {
 	eventsC     chan tcell.Event
 	quitEventsC chan struct{}
 	newGameC    chan struct{}
+	quitGameC   chan struct{}
 }
 
 // NewView returns a View struct pointer setting the screen,
@@ -43,8 +44,16 @@ func NewView(screen tcell.Screen) *View {
 	eventsChannel := make(chan tcell.Event)
 	quitEventsChannel := make(chan struct{})
 	newGameChannel := make(chan struct{})
+	quitGameChannel := make(chan struct{})
 	go screen.ChannelEvents(eventsChannel, quitEventsChannel)
-	view := &View{screen, directionChannel, eventsChannel, quitEventsChannel, newGameChannel}
+	view := &View{
+		screen,
+		directionChannel,
+		eventsChannel,
+		quitEventsChannel,
+		newGameChannel,
+		quitGameChannel,
+	}
 	go view.pollKeys()
 	return view
 }
@@ -103,6 +112,12 @@ func (v *View) ReceiveNewGameSignal() <-chan struct{} {
 	return v.newGameC
 }
 
+// ReceiveQuitSignal returns an empty struct receiver channel
+// which will signal when the user presses the Q button to request to exit from the game.
+func (v *View) ReceiveQuitSignal() <-chan struct{} {
+	return v.quitGameC
+}
+
 func (v *View) pollKeys() {
 	for e := range v.eventsC {
 		if keyEvent, ok := e.(*tcell.EventKey); ok {
@@ -119,6 +134,8 @@ func (v *View) pollKeys() {
 				switch keyEvent.Rune() {
 				case ' ':
 					v.newGameC <- struct{}{}
+				case 'q', 'Q':
+					v.quitGameC <- struct{}{}
 				}
 			}
 		}
