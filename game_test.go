@@ -10,7 +10,7 @@ import (
 func TestGame(t *testing.T) {
 	width, height := 60, 60
 	fs := &snake.FoodStub{}
-	fs.Seed([]snake.FoodStubValue{
+	foodSeededCoordinates := []snake.FoodStubValue{
 		{snake.Coordinate{0, 0}, nil},
 		{snake.Coordinate{1, 0}, nil},
 		{snake.Coordinate{2, 0}, nil},
@@ -18,7 +18,8 @@ func TestGame(t *testing.T) {
 		{snake.Coordinate{4, 0}, nil},
 		{snake.Coordinate{5, 0}, nil},
 		{snake.Coordinate{6, 0}, nil},
-	})
+	}
+	fs.Seed(foodSeededCoordinates)
 
 	t.Run("should start game", func(t *testing.T) {
 		s := snake.NewSnake(width, height)
@@ -31,7 +32,7 @@ func TestGame(t *testing.T) {
 		sc, _, _ := snake.WaitAndReceiveGameChannels(t, g)
 		snake.AssertCoordinates(t, sc, snakeInitCoordinates)
 		_, _, fc := snake.WaitAndReceiveGameChannels(t, g)
-		snake.AssertCoordinate(t, *fc, snake.Coordinate{0, 0})
+		snake.AssertCoordinate(t, *fc, foodSeededCoordinates[0].Coord)
 		cloak.AddTick()
 		snake.WaitAndReceiveGameChannels(t, g)
 		cloak.AddTick()
@@ -275,6 +276,29 @@ func TestGame(t *testing.T) {
 		if r == nil || *r == false {
 			t.Errorf("got result %v, want result %t", r, true)
 		}
+	})
+
+	t.Run("should restart game", func(t *testing.T) {
+		s := snake.NewSnake(width, height)
+		sf := &snake.FoodStub{}
+		sf.Seed(foodSeededCoordinates)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+
+		g := snake.NewGame(s, cloak, sf)
+		g.Start(time.Microsecond)
+
+		wantSnakeCoord, _, _ := snake.WaitAndReceiveGameChannels(t, g)
+		_, _, wantFoodCoord := snake.WaitAndReceiveGameChannels(t, g)
+
+		sf.Seed(foodSeededCoordinates)
+		g.Restart(time.Microsecond)
+
+		gotSnakeCoord, _, _ := snake.WaitAndReceiveGameChannels(t, g)
+		_, _, gotFoodCoord := snake.WaitAndReceiveGameChannels(t, g)
+
+		snake.AssertCoordinates(t, gotSnakeCoord, wantSnakeCoord)
+		snake.AssertCoordinate(t, *gotFoodCoord, *wantFoodCoord)
 	})
 }
 

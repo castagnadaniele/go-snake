@@ -34,6 +34,7 @@ type Game struct {
 	resultC           chan bool
 	foodCoordinate    Coordinate
 	foodC             chan Coordinate
+	quitEventRoutineC chan struct{}
 }
 
 // NewGame returns a pointer to Game, which handles snake
@@ -43,7 +44,18 @@ func NewGame(snake *Snake, cloak Cloak, foodProducer FoodGenerator) *Game {
 	movesChannel := make(chan Direction)
 	resultChannel := make(chan bool)
 	foodChannel := make(chan Coordinate)
-	return &Game{snake, cloak, foodProducer, coordinatesChannel, movesChannel, resultChannel, Coordinate{}, foodChannel}
+	quitEventRoutineChannel := make(chan struct{})
+	return &Game{
+		snake,
+		cloak,
+		foodProducer,
+		coordinatesChannel,
+		movesChannel,
+		resultChannel,
+		Coordinate{},
+		foodChannel,
+		quitEventRoutineChannel,
+	}
 }
 
 // Start starts cloak to tick every d time.Duration,
@@ -56,10 +68,10 @@ func (g *Game) Start(d time.Duration) {
 }
 
 func (g *Game) eventRoutine() {
-	defer close(g.snakeCoordinatesC)
-	defer close(g.movesC)
-	defer close(g.resultC)
-	defer close(g.foodC)
+	// defer close(g.snakeCoordinatesC)
+	// defer close(g.movesC)
+	// defer close(g.resultC)
+	// defer close(g.foodC)
 	direction := g.snake.Face()
 	g.sendInitSnakeAndFoodCoordinates()
 	for {
@@ -74,6 +86,8 @@ func (g *Game) eventRoutine() {
 			if g.snake.IsValidMove(d) {
 				direction = d
 			}
+		case <-g.quitEventRoutineC:
+			return
 		}
 	}
 }
@@ -134,4 +148,12 @@ func (g *Game) ReceiveFoodCoordinate() <-chan Coordinate {
 // ReceiveGameResult returns the game result receive channel.
 func (g *Game) ReceiveGameResult() <-chan bool {
 	return g.resultC
+}
+
+// Restart stops the game internal go routine, reset the snake and starts
+// a new game event loop internal go routine.
+func (g *Game) Restart(d time.Duration) {
+	g.quitEventRoutineC <- struct{}{}
+	g.snake.Reset()
+	go g.eventRoutine()
 }
