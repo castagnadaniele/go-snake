@@ -40,6 +40,7 @@ func (e SnakeInvalidMoveErr) Error() string {
 type Snake struct {
 	width         int
 	height        int
+	initialLength int
 	coordinates   []Coordinate
 	lastTail      *Coordinate
 	faceDirection Direction
@@ -54,15 +55,19 @@ func NewSnake(width, height int) *Snake {
 // NewSnakeOfLength returns a new Snake struct pointer initializing snake coordinates
 // and setting width and height of the board and snake length.
 func NewSnakeOfLength(width, height, length int) *Snake {
-	s := &Snake{width: width, height: height}
-	s.coordinates = make([]Coordinate, length)
-	startX := int(math.Floor(float64(s.width) * 0.6))
-	startY := int(math.Floor(float64(s.height) * 0.5))
-	for i := 0; i < length; i++ {
-		s.coordinates[i] = Coordinate{startX + i, startY}
-	}
+	s := &Snake{width: width, height: height, initialLength: length}
+	s.initCoordinates()
 	s.faceDirection = Left
 	return s
+}
+
+func (s *Snake) initCoordinates() {
+	s.coordinates = make([]Coordinate, s.initialLength)
+	startX := int(math.Floor(float64(s.width) * 0.6))
+	startY := int(math.Floor(float64(s.height) * 0.5))
+	for i := 0; i < s.initialLength; i++ {
+		s.coordinates[i] = Coordinate{startX + i, startY}
+	}
 }
 
 // GetCoordinates returns the snake internal coordinates.
@@ -127,4 +132,11 @@ func (s *Snake) Grow() error {
 // Face returns where the snake head is facing.
 func (s *Snake) Face() Direction {
 	return s.faceDirection
+}
+
+// Reset resets snake internal coordinates, face direction and last tail coordinate pointer.
+func (s *Snake) Reset() {
+	s.initCoordinates()
+	s.faceDirection = Left
+	s.lastTail = nil
 }

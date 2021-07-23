@@ -195,4 +195,20 @@ func TestSnake(t *testing.T) {
 		want := snake.Left
 		snake.AssertDirection(t, got, want)
 	})
+
+	t.Run("should reset snake", func(t *testing.T) {
+		s := snake.NewSnake(60, 60)
+		wantCoord := s.GetCoordinates()
+		wantFace := s.Face()
+
+		s.Move(snake.Up)
+
+		s.Reset()
+		gotCoord := s.GetCoordinates()
+		snake.AssertCoordinates(t, gotCoord, wantCoord)
+		gotFace := s.Face()
+		snake.AssertDirection(t, gotFace, wantFace)
+		gotErr := s.Grow()
+		snake.AssertError(t, gotErr, snake.ErrSnakeMustMoveBeforeGrowing)
+	})
 }
