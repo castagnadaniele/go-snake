@@ -300,6 +300,26 @@ func TestGame(t *testing.T) {
 		snake.AssertCoordinates(t, gotSnakeCoord, wantSnakeCoord)
 		snake.AssertCoordinate(t, *gotFoodCoord, *wantFoodCoord)
 	})
+
+	t.Run("should quit game releasing resources", func(t *testing.T) {
+		s := snake.NewSnake(width, height)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+
+		g := snake.NewGame(s, cloak, fs)
+		g.Start(time.Microsecond)
+
+		snake.WaitAndReceiveGameChannels(t, g)
+		snake.WaitAndReceiveGameChannels(t, g)
+
+		g.Quit()
+
+		select {
+		case cloak.C <- time.Now():
+			t.Error("should not be able to send ticks to game")
+		case <-time.After(time.Millisecond):
+		}
+	})
 }
 
 func assertNoGameResult(t testing.TB, result *bool) {

@@ -68,10 +68,6 @@ func (g *Game) Start(d time.Duration) {
 }
 
 func (g *Game) eventRoutine() {
-	// defer close(g.snakeCoordinatesC)
-	// defer close(g.movesC)
-	// defer close(g.resultC)
-	// defer close(g.foodC)
 	direction := g.snake.Face()
 	g.sendInitSnakeAndFoodCoordinates()
 	for {
@@ -156,4 +152,14 @@ func (g *Game) Restart(d time.Duration) {
 	g.quitEventRoutineC <- struct{}{}
 	g.snake.Reset()
 	go g.eventRoutine()
+}
+
+// Quit stops the game internal go routine, then closes all the internal channels.
+func (g *Game) Quit() {
+	g.quitEventRoutineC <- struct{}{}
+	defer close(g.snakeCoordinatesC)
+	defer close(g.movesC)
+	defer close(g.resultC)
+	defer close(g.foodC)
+	defer close(g.quitEventRoutineC)
 }
