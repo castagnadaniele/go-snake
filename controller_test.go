@@ -32,10 +32,18 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		view.DirectionC <- snake.Up
+		select {
+		case view.DirectionC <- snake.Up:
+		case <-time.After(time.Millisecond * 5):
+			t.Fatalf("should have sent direction %v from view", snake.Up)
+		}
 
-		got := <-game.MoveC
-		snake.AssertDirection(t, got, snake.Up)
+		select {
+		case got := <-game.MoveC:
+			snake.AssertDirection(t, got, snake.Up)
+		case <-time.After(time.Millisecond * 5):
+			t.Fatal("should have received direction from game")
+		}
 	})
 
 	t.Run("should refresh view when game sends snake coordinates", func(t *testing.T) {
@@ -45,9 +53,9 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.SnakeCoordinatesC <- snakeCoordinates
-		gotSnake := <-view.SnakeCoordinatesC
-		gotFood := <-view.FoodCoordinateC
+		game.SendSnakeCoordinates(t, snakeCoordinates)
+		gotSnake := view.GetSnakeCoordinates(t)
+		gotFood := view.GetFoodCoordinate(t)
 		assertCoordinatesNotNil(t, gotSnake)
 		assertCoordinateNil(t, gotFood)
 		snake.AssertCoordinates(t, *gotSnake, snakeCoordinates)
@@ -60,9 +68,9 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.FoodCoordinateC <- foodCoordinate
-		gotSnake := <-view.SnakeCoordinatesC
-		gotFood := <-view.FoodCoordinateC
+		game.SendFoodCoordinate(t, foodCoordinate)
+		gotSnake := view.GetSnakeCoordinates(t)
+		gotFood := view.GetFoodCoordinate(t)
 		assertCoordinatesNil(t, gotSnake)
 		assertCoordinateNotNil(t, gotFood)
 		snake.AssertCoordinate(t, *gotFood, foodCoordinate)
@@ -75,12 +83,12 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.FoodCoordinateC <- foodCoordinate
-		<-view.SnakeCoordinatesC
-		<-view.FoodCoordinateC
-		game.SnakeCoordinatesC <- snakeCoordinates
-		gotSnake := <-view.SnakeCoordinatesC
-		gotFood := <-view.FoodCoordinateC
+		game.SendFoodCoordinate(t, foodCoordinate)
+		view.GetSnakeCoordinates(t)
+		view.GetFoodCoordinate(t)
+		game.SendSnakeCoordinates(t, snakeCoordinates)
+		gotSnake := view.GetSnakeCoordinates(t)
+		gotFood := view.GetFoodCoordinate(t)
 		assertCoordinatesNotNil(t, gotSnake)
 		assertCoordinateNotNil(t, gotFood)
 		snake.AssertCoordinates(t, *gotSnake, snakeCoordinates)
@@ -94,12 +102,12 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.SnakeCoordinatesC <- snakeCoordinates
-		<-view.SnakeCoordinatesC
-		<-view.FoodCoordinateC
-		game.FoodCoordinateC <- foodCoordinate
-		gotSnake := <-view.SnakeCoordinatesC
-		gotFood := <-view.FoodCoordinateC
+		game.SendSnakeCoordinates(t, snakeCoordinates)
+		view.GetSnakeCoordinates(t)
+		view.GetFoodCoordinate(t)
+		game.SendFoodCoordinate(t, foodCoordinate)
+		gotSnake := view.GetSnakeCoordinates(t)
+		gotFood := view.GetFoodCoordinate(t)
 		assertCoordinatesNotNil(t, gotSnake)
 		assertCoordinateNotNil(t, gotFood)
 		snake.AssertCoordinates(t, *gotSnake, snakeCoordinates)
@@ -113,7 +121,7 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.ResultC <- true
+		game.SendResult(t, true)
 		select {
 		case <-view.WinC:
 		case <-view.LoseC:
@@ -130,7 +138,7 @@ func TestController(t *testing.T) {
 
 		go controller.Start(time.Microsecond)
 
-		game.ResultC <- false
+		game.SendResult(t, false)
 		select {
 		case <-view.LoseC:
 		case <-view.WinC:
@@ -143,7 +151,6 @@ func TestController(t *testing.T) {
 	t.Run("should restart game when receives new game signal from view", func(t *testing.T) {
 		view := NewViewSpy()
 		game := NewGameSpy()
-
 		controller := snake.NewController(game, view)
 
 		want := time.Microsecond
@@ -152,7 +159,7 @@ func TestController(t *testing.T) {
 		select {
 		case view.NewGameC <- struct{}{}:
 		case <-time.After(time.Millisecond * 5):
-			t.Errorf("view should have received a new game signal")
+			t.Fatal("view should have received a new game signal")
 		}
 
 		select {
@@ -216,6 +223,33 @@ func (g *GameSpy) Restart(d time.Duration) {
 	g.RestartC <- d
 }
 
+func (g *GameSpy) SendResult(t testing.TB, result bool) {
+	t.Helper()
+	select {
+	case g.ResultC <- result:
+	case <-time.After(time.Millisecond * 5):
+		t.Fatal("should have received game result")
+	}
+}
+
+func (g *GameSpy) SendSnakeCoordinates(t testing.TB, c []snake.Coordinate) {
+	t.Helper()
+	select {
+	case g.SnakeCoordinatesC <- c:
+	case <-time.After(time.Millisecond * 5):
+		t.Fatalf("should have sent snake coordinates %v from game", c)
+	}
+}
+
+func (g *GameSpy) SendFoodCoordinate(t testing.TB, f snake.Coordinate) {
+	t.Helper()
+	select {
+	case g.FoodCoordinateC <- f:
+	case <-time.After(time.Millisecond * 5):
+		t.Fatalf("should have sent food coordiante %v from game", f)
+	}
+}
+
 type ViewSpy struct {
 	DirectionC        chan snake.Direction
 	SnakeCoordinatesC chan *[]snake.Coordinate
@@ -261,6 +295,28 @@ func (v *ViewSpy) DisplayLose() {
 
 func (v *ViewSpy) ReceiveNewGameSignal() <-chan struct{} {
 	return v.NewGameC
+}
+
+func (v *ViewSpy) GetSnakeCoordinates(t testing.TB) *[]snake.Coordinate {
+	t.Helper()
+	select {
+	case c := <-v.SnakeCoordinatesC:
+		return c
+	case <-time.After(time.Millisecond * 5):
+		t.Fatal("should have received snake coordinates from view")
+		return nil
+	}
+}
+
+func (v *ViewSpy) GetFoodCoordinate(t testing.TB) *snake.Coordinate {
+	t.Helper()
+	select {
+	case f := <-v.FoodCoordinateC:
+		return f
+	case <-time.After(time.Millisecond * 5):
+		t.Fatal("should have received food coordinate from view")
+		return nil
+	}
 }
 
 func assertCoordinateNil(t testing.TB, got *snake.Coordinate) {
