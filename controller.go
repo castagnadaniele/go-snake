@@ -8,11 +8,12 @@ type Controller struct {
 	view                ViewHandler
 	lastSnakeCoordinate *[]Coordinate
 	lastFoodCoordinate  *Coordinate
+	gameInterval        time.Duration
 }
 
 // NewController returns a Controller pointer initializing the game and the view.
 func NewController(game GameDirector, view ViewHandler) *Controller {
-	return &Controller{game, view, nil, nil}
+	return &Controller{game, view, nil, nil, 0}
 }
 
 // Start starts the controller internal game, then loops and waits on the view
@@ -24,11 +25,14 @@ func NewController(game GameDirector, view ViewHandler) *Controller {
 //
 // Should be used as a go routine.
 func (c *Controller) Start(d time.Duration) {
+	c.gameInterval = d
 	c.game.Start(d)
 	for {
 		select {
 		case dir := <-c.view.ReceiveDirection():
 			c.game.SendMove(dir)
+		case <-c.view.ReceiveNewGameSignal():
+			c.game.Restart(c.gameInterval)
 		case sc := <-c.game.ReceiveSnakeCoordinates():
 			c.lastSnakeCoordinate = &sc
 			c.view.Refresh(c.lastSnakeCoordinate, c.lastFoodCoordinate)

@@ -22,6 +22,9 @@ type GameDirector interface {
 	// ReceiveGameResult should expose a receiver channel which emits
 	// when the game is won or is lost.
 	ReceiveGameResult() <-chan bool
+	// Restart should stop the game internal go routine, should reset the snake
+	// and should start a new internal go routine event loop
+	Restart(d time.Duration)
 }
 
 // Game coordinates the snake behaviour with the cloak ticks.

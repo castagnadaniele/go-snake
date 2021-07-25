@@ -139,6 +139,31 @@ func TestController(t *testing.T) {
 			t.Error("view should have displayed a lose")
 		}
 	})
+
+	t.Run("should restart game when receives new game signal from view", func(t *testing.T) {
+		view := NewViewSpy()
+		game := NewGameSpy()
+
+		controller := snake.NewController(game, view)
+
+		want := time.Microsecond
+		go controller.Start(want)
+
+		select {
+		case view.NewGameC <- struct{}{}:
+		case <-time.After(time.Millisecond * 5):
+			t.Errorf("view should have received a new game signal")
+		}
+
+		select {
+		case got := <-game.RestartC:
+			if got != want {
+				t.Errorf("got duration %v, want duration %v", got, want)
+			}
+		case <-time.After(time.Millisecond * 5):
+			t.Errorf("game should have restarted")
+		}
+	})
 }
 
 type GameSpy struct {
@@ -147,6 +172,7 @@ type GameSpy struct {
 	FoodCoordinateC   chan snake.Coordinate
 	ResultC           chan bool
 	MoveC             chan snake.Direction
+	RestartC          chan time.Duration
 }
 
 func NewGameSpy() *GameSpy {
@@ -155,12 +181,14 @@ func NewGameSpy() *GameSpy {
 	foodCoordinatesChannel := make(chan snake.Coordinate)
 	resultChannel := make(chan bool)
 	moveChannel := make(chan snake.Direction)
+	restartChannel := make(chan time.Duration)
 	return &GameSpy{
 		StartC:            startChannel,
 		SnakeCoordinatesC: snakeCoordiantesChannel,
 		FoodCoordinateC:   foodCoordinatesChannel,
 		ResultC:           resultChannel,
 		MoveC:             moveChannel,
+		RestartC:          restartChannel,
 	}
 }
 
@@ -184,12 +212,17 @@ func (g *GameSpy) ReceiveGameResult() <-chan bool {
 	return g.ResultC
 }
 
+func (g *GameSpy) Restart(d time.Duration) {
+	g.RestartC <- d
+}
+
 type ViewSpy struct {
 	DirectionC        chan snake.Direction
 	SnakeCoordinatesC chan *[]snake.Coordinate
 	FoodCoordinateC   chan *snake.Coordinate
 	WinC              chan struct{}
 	LoseC             chan struct{}
+	NewGameC          chan struct{}
 }
 
 func NewViewSpy() *ViewSpy {
@@ -198,12 +231,14 @@ func NewViewSpy() *ViewSpy {
 	foodChannel := make(chan *snake.Coordinate)
 	winChannel := make(chan struct{})
 	loseChannel := make(chan struct{})
+	newGameChannel := make(chan struct{})
 	return &ViewSpy{
 		DirectionC:        directionChannel,
 		SnakeCoordinatesC: snakeChannel,
 		FoodCoordinateC:   foodChannel,
 		WinC:              winChannel,
 		LoseC:             loseChannel,
+		NewGameC:          newGameChannel,
 	}
 }
 
@@ -222,6 +257,10 @@ func (v *ViewSpy) DisplayWin() {
 
 func (v *ViewSpy) DisplayLose() {
 	v.LoseC <- struct{}{}
+}
+
+func (v *ViewSpy) ReceiveNewGameSignal() <-chan struct{} {
+	return v.NewGameC
 }
 
 func assertCoordinateNil(t testing.TB, got *snake.Coordinate) {
