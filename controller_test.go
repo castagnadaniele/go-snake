@@ -35,14 +35,14 @@ func TestController(t *testing.T) {
 		select {
 		case view.DirectionC <- snake.Up:
 		case <-time.After(time.Millisecond * 5):
-			t.Fatalf("should have sent direction %v from view", snake.Up)
+			t.Errorf("should have sent direction %v from view", snake.Up)
 		}
 
 		select {
 		case got := <-game.MoveC:
 			snake.AssertDirection(t, got, snake.Up)
 		case <-time.After(time.Millisecond * 5):
-			t.Fatal("should have received direction from game")
+			t.Error("should have received direction from game")
 		}
 	})
 
@@ -159,7 +159,7 @@ func TestController(t *testing.T) {
 		select {
 		case view.NewGameC <- struct{}{}:
 		case <-time.After(time.Millisecond * 5):
-			t.Fatal("view should have received a new game signal")
+			t.Error("view should have received a new game signal")
 		}
 
 		select {
@@ -171,6 +171,32 @@ func TestController(t *testing.T) {
 			t.Errorf("game should have restarted")
 		}
 	})
+
+	t.Run("should exit when receiving quit signal from view", func(T *testing.T) {
+		view := NewViewSpy()
+		game := NewGameSpy()
+		controller := snake.NewController(game, view)
+
+		go controller.Start(time.Microsecond)
+
+		select {
+		case view.QuitC <- struct{}{}:
+		case <-time.After(time.Millisecond * 5):
+			t.Error("should have received a quit signal from view")
+		}
+
+		select {
+		case <-game.QuitC:
+		case <-time.After(time.Millisecond * 5):
+			t.Error("should have quit game")
+		}
+
+		select {
+		case <-controller.WaitForQuitSignal():
+		case <-time.After(time.Millisecond * 5):
+			t.Error("should have received a quit signal from controller")
+		}
+	})
 }
 
 type GameSpy struct {
@@ -180,6 +206,7 @@ type GameSpy struct {
 	ResultC           chan bool
 	MoveC             chan snake.Direction
 	RestartC          chan time.Duration
+	QuitC             chan struct{}
 }
 
 func NewGameSpy() *GameSpy {
@@ -189,6 +216,7 @@ func NewGameSpy() *GameSpy {
 	resultChannel := make(chan bool)
 	moveChannel := make(chan snake.Direction)
 	restartChannel := make(chan time.Duration)
+	quitChannel := make(chan struct{})
 	return &GameSpy{
 		StartC:            startChannel,
 		SnakeCoordinatesC: snakeCoordiantesChannel,
@@ -196,6 +224,7 @@ func NewGameSpy() *GameSpy {
 		ResultC:           resultChannel,
 		MoveC:             moveChannel,
 		RestartC:          restartChannel,
+		QuitC:             quitChannel,
 	}
 }
 
@@ -223,12 +252,16 @@ func (g *GameSpy) Restart(d time.Duration) {
 	g.RestartC <- d
 }
 
+func (g *GameSpy) Quit() {
+	g.QuitC <- struct{}{}
+}
+
 func (g *GameSpy) SendResult(t testing.TB, result bool) {
 	t.Helper()
 	select {
 	case g.ResultC <- result:
 	case <-time.After(time.Millisecond * 5):
-		t.Fatal("should have received game result")
+		t.Error("should have received game result")
 	}
 }
 
@@ -237,7 +270,7 @@ func (g *GameSpy) SendSnakeCoordinates(t testing.TB, c []snake.Coordinate) {
 	select {
 	case g.SnakeCoordinatesC <- c:
 	case <-time.After(time.Millisecond * 5):
-		t.Fatalf("should have sent snake coordinates %v from game", c)
+		t.Errorf("should have sent snake coordinates %v from game", c)
 	}
 }
 
@@ -246,7 +279,7 @@ func (g *GameSpy) SendFoodCoordinate(t testing.TB, f snake.Coordinate) {
 	select {
 	case g.FoodCoordinateC <- f:
 	case <-time.After(time.Millisecond * 5):
-		t.Fatalf("should have sent food coordiante %v from game", f)
+		t.Errorf("should have sent food coordiante %v from game", f)
 	}
 }
 
@@ -257,6 +290,7 @@ type ViewSpy struct {
 	WinC              chan struct{}
 	LoseC             chan struct{}
 	NewGameC          chan struct{}
+	QuitC             chan struct{}
 }
 
 func NewViewSpy() *ViewSpy {
@@ -266,6 +300,7 @@ func NewViewSpy() *ViewSpy {
 	winChannel := make(chan struct{})
 	loseChannel := make(chan struct{})
 	newGameChannel := make(chan struct{})
+	quitChannel := make(chan struct{})
 	return &ViewSpy{
 		DirectionC:        directionChannel,
 		SnakeCoordinatesC: snakeChannel,
@@ -273,6 +308,7 @@ func NewViewSpy() *ViewSpy {
 		WinC:              winChannel,
 		LoseC:             loseChannel,
 		NewGameC:          newGameChannel,
+		QuitC:             quitChannel,
 	}
 }
 
@@ -297,13 +333,17 @@ func (v *ViewSpy) ReceiveNewGameSignal() <-chan struct{} {
 	return v.NewGameC
 }
 
+func (v *ViewSpy) ReceiveQuitSignal() <-chan struct{} {
+	return v.QuitC
+}
+
 func (v *ViewSpy) GetSnakeCoordinates(t testing.TB) *[]snake.Coordinate {
 	t.Helper()
 	select {
 	case c := <-v.SnakeCoordinatesC:
 		return c
 	case <-time.After(time.Millisecond * 5):
-		t.Fatal("should have received snake coordinates from view")
+		t.Error("should have received snake coordinates from view")
 		return nil
 	}
 }
@@ -314,7 +354,7 @@ func (v *ViewSpy) GetFoodCoordinate(t testing.TB) *snake.Coordinate {
 	case f := <-v.FoodCoordinateC:
 		return f
 	case <-time.After(time.Millisecond * 5):
-		t.Fatal("should have received food coordinate from view")
+		t.Error("should have received food coordinate from view")
 		return nil
 	}
 }

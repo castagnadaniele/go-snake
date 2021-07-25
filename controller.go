@@ -9,11 +9,13 @@ type Controller struct {
 	lastSnakeCoordinate *[]Coordinate
 	lastFoodCoordinate  *Coordinate
 	gameInterval        time.Duration
+	quitC               chan struct{}
 }
 
 // NewController returns a Controller pointer initializing the game and the view.
 func NewController(game GameDirector, view ViewHandler) *Controller {
-	return &Controller{game, view, nil, nil, 0}
+	quitChannel := make(chan struct{})
+	return &Controller{game, view, nil, nil, 0, quitChannel}
 }
 
 // Start starts the controller internal game, then loops and waits on the view
@@ -33,6 +35,9 @@ func (c *Controller) Start(d time.Duration) {
 			c.game.SendMove(dir)
 		case <-c.view.ReceiveNewGameSignal():
 			c.game.Restart(c.gameInterval)
+		case <-c.view.ReceiveQuitSignal():
+			c.game.Quit()
+			c.quitC <- struct{}{}
 		case sc := <-c.game.ReceiveSnakeCoordinates():
 			c.lastSnakeCoordinate = &sc
 			c.view.Refresh(c.lastSnakeCoordinate, c.lastFoodCoordinate)
@@ -47,4 +52,12 @@ func (c *Controller) Start(d time.Duration) {
 			}
 		}
 	}
+}
+
+// WaitForQuitSignal returns an empty struct receiver channel on which
+// the controller sends when it has received a quit signal from view.
+// After calling Controller.Start on the main go routine the consumer
+// should wait on this channel.
+func (c *Controller) WaitForQuitSignal() <-chan struct{} {
+	return c.quitC
 }

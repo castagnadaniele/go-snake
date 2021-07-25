@@ -23,9 +23,12 @@ type ViewHandler interface {
 	DisplayWin()
 	// DisplayLose should display a lose screen.
 	DisplayLose()
-	// ReceiveNewGameSignal should return a empty struct receiver channel on which
+	// ReceiveNewGameSignal should return an empty struct receiver channel on which
 	// the ViewHandler should send new game input from the user.
 	ReceiveNewGameSignal() <-chan struct{}
+	// ReceiveQuitSignal should returna an empty struct receiver channel on which
+	// the ViewHandler should send quit game input from the user.
+	ReceiveQuitSignal() <-chan struct{}
 }
 
 // View struct which prints the snake game elements on terminal.

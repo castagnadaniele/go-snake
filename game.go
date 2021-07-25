@@ -25,6 +25,8 @@ type GameDirector interface {
 	// Restart should stop the game internal go routine, should reset the snake
 	// and should start a new internal go routine event loop
 	Restart(d time.Duration)
+	// Quit should stop the game internal go routine and then release resources.
+	Quit()
 }
 
 // Game coordinates the snake behaviour with the cloak ticks.
