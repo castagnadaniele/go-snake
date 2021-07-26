@@ -81,7 +81,6 @@ func (g *Game) eventRoutine() {
 			result := g.handleMove(direction)
 			if result != nil {
 				g.resultC <- *result
-				return
 			}
 		case d := <-g.movesC:
 			if g.snake.IsValidMove(d) {

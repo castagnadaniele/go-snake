@@ -38,6 +38,7 @@ func (c *Controller) Start(d time.Duration) {
 		case <-c.view.ReceiveQuitSignal():
 			c.game.Quit()
 			c.quitC <- struct{}{}
+			return
 		case sc := <-c.game.ReceiveSnakeCoordinates():
 			c.lastSnakeCoordinate = &sc
 			c.view.Refresh(c.lastSnakeCoordinate, c.lastFoodCoordinate)
