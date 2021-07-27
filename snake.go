@@ -8,6 +8,7 @@ import (
 const (
 	ErrHeadOutOfBoard             = SnakeErr("snake: head out of board")
 	ErrSnakeMustMoveBeforeGrowing = SnakeErr("snake: must move before growing")
+	ErrHeadHitBody                = SnakeErr("snake: head hit body")
 )
 
 const (
@@ -78,7 +79,8 @@ func (s *Snake) GetCoordinates() []Coordinate {
 // Move moves the snake head towards direction d, cutting tail coordinate
 // and appending new coordinate on head. Returns ErrHeadOutOfBoard error
 // when head would move out of the board. Returns SnakeInvalidMoveErr error if
-// direction d is inconsistent with face direction.
+// direction d is inconsistent with face direction. Returns ErrHeadHitBody error
+// if the head would move above a body coordinate.
 func (s *Snake) Move(d Direction) error {
 	head := s.setHead(d)
 	if head.X < 0 || head.X >= s.width || head.Y < 0 || head.Y >= s.height {
@@ -87,9 +89,14 @@ func (s *Snake) Move(d Direction) error {
 	if !s.IsValidMove(d) {
 		return NewSnakeInvalidMoveErr(s.faceDirection, d)
 	}
-	s.lastTail = &s.coordinates[len(s.coordinates)-1]
+	potentialTail := &s.coordinates[len(s.coordinates)-1]
+	nextBodyCoordinates := append([]Coordinate{{head.X, head.Y}}, s.coordinates[:len(s.coordinates)-1]...)
+	if contains(nextBodyCoordinates[1:], head) {
+		return ErrHeadHitBody
+	}
+	s.lastTail = potentialTail
 	s.faceDirection = d
-	s.coordinates = append([]Coordinate{{head.X, head.Y}}, s.coordinates[:len(s.coordinates)-1]...)
+	s.coordinates = nextBodyCoordinates
 	return nil
 }
 

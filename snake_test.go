@@ -211,4 +211,26 @@ func TestSnake(t *testing.T) {
 		gotErr := s.Grow()
 		snake.AssertError(t, gotErr, snake.ErrSnakeMustMoveBeforeGrowing)
 	})
+
+	t.Run("move should return error when head would hit body", func(t *testing.T) {
+		s := snake.NewSnakeOfLength(10, 10, 6)
+		err := s.Move(snake.Up)
+		snake.AssertNoError(t, err)
+		err = s.Move(snake.Right)
+		snake.AssertNoError(t, err)
+		err = s.Move(snake.Down)
+		snake.AssertError(t, err, snake.ErrHeadHitBody)
+	})
+
+	t.Run("head should not hit body", func(t *testing.T) {
+		s := snake.NewSnakeOfLength(10, 10, 4)
+		err := s.Move(snake.Up)
+		snake.AssertNoError(t, err)
+		err = s.Move(snake.Right)
+		snake.AssertNoError(t, err)
+		err = s.Move(snake.Down)
+		snake.AssertNoError(t, err)
+		err = s.Move(snake.Left)
+		snake.AssertNoError(t, err)
+	})
 }
