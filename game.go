@@ -105,7 +105,7 @@ func (g *Game) sendInitSnakeAndFoodCoordinates() {
 func (g *Game) handleMove(d Direction) *bool {
 	result := false
 	err := g.snake.Move(d)
-	if err == ErrHeadOutOfBoard {
+	if err == ErrHeadOutOfBoard || err == ErrHeadHitBody {
 		return &result
 	}
 	coord := g.snake.GetCoordinates()

@@ -320,6 +320,32 @@ func TestGame(t *testing.T) {
 		case <-time.After(time.Millisecond):
 		}
 	})
+
+	t.Run("game should end with a lose when snake head hits snake body", func(t *testing.T) {
+		s := snake.NewSnakeOfLength(width, height, 6)
+		cloak := NewStubCloak()
+		defer cloak.Stop()
+
+		g := snake.NewGame(s, cloak, fs)
+		g.Start(time.Microsecond)
+
+		snake.WaitAndReceiveGameChannels(t, g)
+		snake.WaitAndReceiveGameChannels(t, g)
+
+		g.SendMove(snake.Up)
+		cloak.AddTick()
+		snake.WaitAndReceiveGameChannels(t, g)
+
+		g.SendMove(snake.Right)
+		cloak.AddTick()
+		snake.WaitAndReceiveGameChannels(t, g)
+
+		g.SendMove(snake.Down)
+		cloak.AddTick()
+		_, r, _ := snake.WaitAndReceiveGameChannels(t, g)
+
+		assertGameResult(t, r, false)
+	})
 }
 
 func assertNoGameResult(t testing.TB, result *bool) {
@@ -348,6 +374,17 @@ func assertSnakeLength(t testing.TB, c []snake.Coordinate, want int) {
 	got := len(c)
 	if got != want {
 		t.Errorf("got snake len %d, want %d", got, want)
+	}
+}
+
+func assertGameResult(t testing.TB, got *bool, want bool) {
+	t.Helper()
+	if got == nil {
+		t.Fatal("should have got a boolean pointer, got nil")
+	}
+
+	if got != nil && *got != want {
+		t.Errorf("got game result %t, want %t", *got, want)
 	}
 }
 
