@@ -1,6 +1,6 @@
 # Snake game in Go
 
-I made a simple Snake game on the terminal to learn Go basics.
+I made a simple Snake game on the terminal to learn Go basics and practice Test Driven Development.
 
 ## Setup
 
